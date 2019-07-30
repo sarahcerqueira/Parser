@@ -1,8 +1,10 @@
 package view;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import util.ModoException;
+import util.Token;
 
 public class Compilador {
 
@@ -12,8 +14,16 @@ public class Compilador {
      */
     public static void main(String[] args) throws IOException, ModoException {
     	
+      ArrayList<Token> listaDeTokens;
+      
+      //executa o analisador lexico e obtem a lista de tokens
       AnalisadorLexico al = new AnalisadorLexico();
-      al.executar("teste.txt");
+      listaDeTokens = al.gerarListaDeTokens("teste_pedro.txt");
+      
+      //executa o analisador sintático
+      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
+      as.executar();
+      
     	
     }
 	

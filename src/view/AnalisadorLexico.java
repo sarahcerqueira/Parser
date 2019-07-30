@@ -44,7 +44,7 @@ public class AnalisadorLexico {
 
 	private String lexema;
 
-	public void executar(String arquivo) throws FileNotFoundException, IOException, ModoException {
+	public ArrayList<Token> gerarListaDeTokens(String arquivo) throws FileNotFoundException, IOException, ModoException {
 
 		this.inicializar();
 		ManipuladorDeArquivo leitura = new ManipuladorDeArquivo(arquivo, Modo.LEITURA);
@@ -53,26 +53,26 @@ public class AnalisadorLexico {
 		Classe classe1 = Classe.NULL; // Para comentarios, Numeros, identificadores, cadeias
 
 		char c;
-		char proximo = ' '; // Próximo caractere
+		char proximo = ' '; // Prï¿½ximo caractere
 		boolean aceito = false; // Aceito, automato em estado final
 		boolean ajuste = true; // Se proximo for usado
-		boolean ativo = false; // Auxilia na verificação de erros
-		boolean fim = false; // Flag auxiliar apar determian o fim da classificação
-		boolean loop = leitura.hasNextCaractere(); // verifica se há caractere há ser lido
+		boolean ativo = false; // Auxilia na verificaï¿½ï¿½o de erros
+		boolean fim = false; // Flag auxiliar apar determian o fim da classificaï¿½ï¿½o
+		boolean loop = leitura.hasNextCaractere(); // verifica se hï¿½ caractere hï¿½ ser lido
 		int linha = 1; // Conta as linhas
 
-		// Este loop faz todo processo de classificação
+		// Este loop faz todo processo de classificaï¿½ï¿½o
 		while (loop) {
 
 			c = proximo;
 			proximo = leitura.nextCaractere();
 
-			// Se ajuste é falso significa que o próximo não foi utilizado em apenas um loop
+			// Se ajuste ï¿½ falso significa que o prï¿½ximo nï¿½o foi utilizado em apenas um loop
 			if (!ajuste) {
 
 				if (c == '\r' || c == '\n' || c == '\t') {
 
-					// Aceito significa que há um token salvar
+					// Aceito significa que hï¿½ um token salvar
 					if (aceito) {
 						this.classificao(classe1, linha);
 						this.resetLexema();
@@ -128,24 +128,24 @@ public class AnalisadorLexico {
 					}
 				}
 
-				// Checa se o caracter é um delimitador ou operador.
+				// Checa se o caracter ï¿½ um delimitador ou operador.
 				classe = this.isdelimitacao(c);
 
-				//Se classe é NULL c não é operador nem delimitador
+				//Se classe ï¿½ NULL c nï¿½o ï¿½ operador nem delimitador
 				if (!classe.equals(Classe.NULL)) {
 
 					switch (classe.getClasse()) {
 
 					case ("DELIMITADOR"):
 						
-						// O ponto também pode fazer parte de um número
+						// O ponto tambï¿½m pode fazer parte de um nï¿½mero
 						if (classe1.equals(Classe.NUMERO) && c == '.') {
 							
 							classe = Classe.NULL;
 							break;
 						}
 						
-						//Se aceito é true, significa que antes do delimitador havia um token formado
+						//Se aceito ï¿½ true, significa que antes do delimitador havia um token formado
 						if (aceito) {
 							this.classificao(classe1, linha);
 							this.resetLexema();
@@ -153,9 +153,9 @@ public class AnalisadorLexico {
 							this.resetAutomatos();
 							aceito = false;
 							
-						/*Se Aceito é false e um delimitador foi encontrado o lexema anterior está
-						 * incompleto logo é considerado erro. Entretanto se classe1 é um cometário
-						 * ou cadeia de caracteres eles aceitam também delimitadores e operadores logicos*/
+						/*Se Aceito ï¿½ false e um delimitador foi encontrado o lexema anterior estï¿½
+						 * incompleto logo ï¿½ considerado erro. Entretanto se classe1 ï¿½ um cometï¿½rio
+						 * ou cadeia de caracteres eles aceitam tambï¿½m delimitadores e operadores logicos*/
 						} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.COMENTARIO)
 								&& !classe1.equals(Classe.CADEIA_DE_CARACTERES)) {
 							
@@ -317,7 +317,7 @@ public class AnalisadorLexico {
 
 					}// Fim switch
 
-				/*Se c não é operador nem delimitado, e classe1 ainda é NULL, c pode ser numero
+				/*Se c nï¿½o ï¿½ operador nem delimitado, e classe1 ainda ï¿½ NULL, c pode ser numero
 				 * comentario, identificado, ou uma cadeia*/
 					
 				} else {
@@ -329,8 +329,8 @@ public class AnalisadorLexico {
 
 				}
 				
-				/*Se classe == NULL e ativo é falso significa que não houve classificação antes
-				 * e então aqui os automatados devem continuar identificando*/
+				/*Se classe == NULL e ativo ï¿½ falso significa que nï¿½o houve classificaï¿½ï¿½o antes
+				 * e entï¿½o aqui os automatados devem continuar identificando*/
 				if (classe.equals(Classe.NULL) && !ativo) {
 					
 					switch (classe1.getClasse()) {
@@ -444,8 +444,8 @@ public class AnalisadorLexico {
 
 		for (int i = 0; i < this.listaDeTokens.size(); i++) {
 			if (i == 0) {
-				System.out.println("Tokens Válidos\n");
-				escrita.escreverArquivo("Tokens Válidos\r\n");
+				System.out.println("Tokens Vï¿½lidos\n");
+				escrita.escreverArquivo("Tokens Vï¿½lidos\r\n");
 			}
 			Token t = this.listaDeTokens.get(i);
 			System.out.println(t.getLinha() + " " + t.getValor() + " " + t.getClasse().getClasse());
@@ -454,8 +454,8 @@ public class AnalisadorLexico {
 
 		for (int i = 0; i < this.listaDeErro.size(); i++) {
 			if (i == 0) {
-				System.out.println("\nTokens Inválidos\n");
-				escrita.escreverArquivo("\r\nTokens Inválidos\r\n");
+				System.out.println("\nTokens Invï¿½lidos\n");
+				escrita.escreverArquivo("\r\nTokens Invï¿½lidos\r\n");
 			}
 			Token t = this.listaDeErro.get(i);
 			System.out.println(t.getLinha() + " " + t.getValor() + " " + t.getClasse().getClasse());
@@ -464,7 +464,8 @@ public class AnalisadorLexico {
 		}
 
 		escrita.fechaArquivo();
-
+                        
+                return this.listaDeTokens;
 	}
 
 	private Classe isdelimitacao(char c) {
@@ -509,7 +510,7 @@ public class AnalisadorLexico {
 			if (this.getToken(-1).getValor().equals("-")) {
 				Classe cl = this.getToken(-2).getClasse();
 
-				// Verifica se há - que oderia ser classificado como parte de um número
+				// Verifica se hï¿½ - que oderia ser classificado como parte de um nï¿½mero
 				if (!cl.equals(Classe.NUMERO) && !cl.equals(Classe.IDENTIFICADOR)) {
 					this.listaDeTokens.remove(this.listaDeTokens.size() - 1);
 					this.lexema = "-";

@@ -33,10 +33,13 @@ public class Token {
         
         public boolean pertenceAoPrimeiroDe(String naoTerminal){
         
-            if(naoTerminal.equals("escopoPrograma")){
-                return (valor.matches("([a-zA-Z]|[0-9]|_)*") | valor.equals(""));
-            }else if(naoTerminal.equals("metodo")){
-                return valor.equals("metodo");
+            switch (naoTerminal) {
+                case "escopoPrograma":
+                    return (valor.matches("([a-zA-Z]|[0-9]|_)*") | valor.equals(""));
+                case "metodo":
+                    return valor.equals("metodo");
+                case "multiplasConstantes":    
+                    return valor.equals(",");
             }
         
             return false;

@@ -1,4 +1,6 @@
 programa{
 constantes{
+inteiro a1_2b = -2.345, b = 2;
+texto s = "oi";
 }
 }

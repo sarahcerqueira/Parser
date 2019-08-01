@@ -37,14 +37,6 @@ public class AnalisadorSintatico {
         //Identificadores
     }
     
-    public boolean pertenceAoPrimeiroDe(String naoTerminal){
-        if(naoTerminal.equals("escopoPrograma")){
-            return (this.token.getValor().equals("metodo") | this.token.getValor().equals(""));
-        }
-        
-        return false;
-    }
-    
     public void executar(){
      
         this.token = proximo_token();
@@ -82,7 +74,8 @@ public class AnalisadorSintatico {
                 if(this.token.getValor().equals("}")){
                     return;
                 }else{
-                    System.out.println("ERRO: está faltando o simbolo }");
+                    //System.out.println("ERRO: está faltando o simbolo }");
+                    return;
                 }
                 
             }else{
@@ -135,8 +128,8 @@ public class AnalisadorSintatico {
             }else{
                 System.out.println("ERRO: falta a assinatura do metodo");
             }
-        }else if(this.token.getValor().equals("")){
-            this.token = proximo_token();
+        }else if(this.token.getValor().equals("}")){//mesmo problema checando vazio, melhor checar o }
+            //this.token = proximo_token();
             return;
         }else{
             System.out.println("ERRO: falta a palavra metodo");
@@ -151,13 +144,56 @@ public class AnalisadorSintatico {
                 this.token = proximo_token();
                 estruturaConstantes();
             }
-        }else if(this.token.getValor().equals("")){
-            this.token = proximo_token();
+        }else if(this.token.getValor().equals("}")){//mesmo problema se checar vazio
+            //this.token = proximo_token();
             return;
         }
     }
 
     private void constantes() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(this.token.getValor().matches("([a-zA-Z]|[0-9]|_)*")){ //token == identificador
+            this.token = proximo_token();
+            if(this.token.getValor().equals("=")){
+                this.token = proximo_token();
+                constante();
+                //this.token = proximo_token(); constante já faz isso
+                multiConst();
+            }else{
+                System.out.println("ERRO: faltou o caractere =");
+            }
+        }else{
+            System.out.println("ERRO: declaração de constante sem identificador");
+        }
+    }
+
+    private void constante() {
+        if(this.token.getValor().matches("([a-zA-Z]|[0-9]|_)*") |  this.token.getValor().matches("\"([a-zA-Z])*\"") |
+                  this.token.getValor().matches("-?[0-9]+(.[0-9]+)?") ){
+            this.token = proximo_token();
+        }else{
+            System.out.println("ERRO: atribuição de constante sem Numero/CadeiaCaracteres/Identificador");
+        }
+    }
+
+    private void multiConst() {
+        if(this.token.pertenceAoPrimeiroDe("multiplasConstantes")){
+            //this.token = proximo_token();
+            multiplasConstantes();
+        }else if(this.token.getValor().equals(";")){ /*não vale a pena checar se é igual a vazio, pq se a linha inteiro a = 2;
+                                              quando o token for ; ele vai querer vazio, e vai dar erro sem estar errado. Outra opção
+                                                é manter só o if e tirar o resto, funciona tb.*/
+            return;
+        }else{
+            System.out.println("ERRO: gramatica de multiplas constantes equivocada");
+        }
+    }
+
+    private void multiplasConstantes() {
+        if(this.token.getValor().equals(",")){
+            this.token = proximo_token();
+            constantes();
+        }else{
+            System.out.println("ERRO: faltou virugula na declaração de multiplas constantes");
+        }
     }
 }

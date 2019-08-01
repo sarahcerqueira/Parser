@@ -19,6 +19,11 @@ public class AnalisadorSintatico {
     private ArrayList<Token> listaDeTokens;
     private ArrayList<String> tipo = new ArrayList();
     private Token token;
+    private final String identificador = "[a-zA-Z]([a-zA-Z]|[0-9]|_)*";
+    private final String digito = "-?[0-9]+(.[0-9]+)?";
+    private final String cadeiaCaracteres = "\"([a-zA-Z])*\"";
+    private final String operadoresAritmeticos = "+ | - | * | / ";
+    
     
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens){
         this.listaDeTokens = listaDeTokens;
@@ -121,9 +126,12 @@ public class AnalisadorSintatico {
 
     private void escopoPrograma() {
         if(this.token.pertenceAoPrimeiroDe("metodo")){
+        	
             this.token = proximo_token();
+            
             if(this.token.pertenceAoPrimeiroDe("escopoPrograma")){
                 this.token = proximo_token();
+                
                 return;
             }else{
                 System.out.println("ERRO: falta a assinatura do metodo");
@@ -167,7 +175,7 @@ public class AnalisadorSintatico {
     }
 
     private void constante() {
-        if(this.token.getValor().matches("([a-zA-Z]|[0-9]|_)*") |  this.token.getValor().matches("\"([a-zA-Z])*\"") |
+        if(this.token.getValor().matches("[a-zA-Z]([a-zA-Z]|[0-9]|_)*") |  this.token.getValor().matches("\"([a-zA-Z])*\"") |
                   this.token.getValor().matches("-?[0-9]+(.[0-9]+)?") ){
             this.token = proximo_token();
         }else{
@@ -196,4 +204,216 @@ public class AnalisadorSintatico {
             System.out.println("ERRO: faltou virugula na declaração de multiplas constantes");
         }
     }
+    
+    private void leia() {
+    	if(this.token.getValor().equals("leia")) {
+    		this.token = proximo_token();
+    		
+    		if (this.token.getValor().equals("(")) {
+        		this.token = proximo_token();
+        		conteudoLeia();
+    			
+    			if(this.token.getValor().equals(")")) {
+    	    		this.token = proximo_token();
+    	    		
+    	    		if(this.token.getValor().equals(";")) {
+        	    		this.token = proximo_token();
+    	    			
+    	    		} else {
+    	                System.out.println("ERRO: faltou ponto e virgula no leia");
+    	    		}
+    			}else {
+    	            System.out.println("ERRO: faltou )");
+    			}
+    		} else {
+	            System.out.println("ERRO: faltou (");
+    		}
+    	} else {
+            System.out.println("ERRO: faltou leia");
+
+    	}
+    }
+    
+    private void conteudoLeia() {
+    	
+    	if(this.token.getValor().matches(this.identificador)) {
+    		this.token = proximo_token();
+    		vetor();
+    		lermais();
+    	} else {
+            System.out.println("ERRO");
+    	}
+
+    }
+    
+    private void lermais() {
+    	if(this.token.getValor().equals(",")) {
+    		this.token = proximo_token();
+    		conteudoLeia();
+    	}
+    }
+    
+    private void opIndice() {
+    	if(this.token.getClasse().equals(Classe.OPERADOR_ARITMETICO.getClasse())) {
+    		this.token = proximo_token();
+    		opI2();
+    		opIndice();
+    	} 
+    	
+    }
+    
+    private void opI2() {
+    	if(this.token.getValor().matches(this.digito)) {
+    		this.token = proximo_token();
+    		
+    	} else if(this.token.getValor().matches(this.identificador)) {
+    		this.token = proximo_token();
+
+    	} else {
+            System.out.println("ERRO");
+    	}
+    }
+    
+    private void vetor(){
+    	if(this.token.getValor().equals("[")) {
+    		this.token = proximo_token();
+    		opI2();
+    		opIndice();
+    		
+    		if(this.token.equals(']')) {
+        		this.token = proximo_token();
+        		matriz();
+    		} else {
+                System.out.println("ERRO");
+
+    		}
+    	}
+    }
+    
+    private void matriz() {
+    	if(this.token.getValor().equals("[")) {
+    		this.token = proximo_token();
+    		opI2();
+    		opIndice();
+    		
+    		if(this.token.equals(']')) {
+        		this.token = proximo_token();
+        		
+    		} else {
+                System.out.println("ERRO");
+
+    		}
+    	}
+    }
+    
+    private void metodo() {
+    	
+    	if(this.token.getValor().equals("metodo")) {
+    		this.token = proximo_token();
+    		
+    		if(this.token.getValor().matches(this.identificador)) {
+        		this.token = proximo_token();
+        		
+        		if(this.token.getValor().equals("(")) {
+            		this.token = proximo_token();
+        			listaParametros();
+        			
+        			if(this.token.equals(")")){
+                		this.token = proximo_token();
+                		
+                		if(this.token.equals(":")){
+                    		this.token = proximo_token();
+                    		
+                    		if(this.tipo.contains(this.token.getValor())) {
+                        		this.token = proximo_token();
+                        		
+                        		if(this.token.getValor().equals("{")) {
+                            		this.token = proximo_token();
+                            		declaracaoVariaveis();
+                            		escopoMetodo();
+                            		
+                            		if(this.token.getValor().equals("}")) {
+                                		this.token = proximo_token();                            		
+                            		
+                            		}else {
+                                        System.out.println("ERRO");
+
+                            		}
+                            		
+                        		}else {
+                                    System.out.println("ERRO");
+
+                        		}
+
+                    		}else {
+                                System.out.println("ERRO");
+
+                    		}
+
+                		} else {
+                            System.out.println("ERRO");
+
+                		}
+        			} else {
+                        System.out.println("ERRO");
+
+        			}
+        		}else {
+                    System.out.println("ERRO");
+
+        		}
+    		} else {
+                System.out.println("ERRO");
+
+    		}
+    	} else {
+            System.out.println("ERRO");
+
+    	}
+    }
+    
+    private void listaParametros() {
+    	if(this.tipo.contains(this.token.getValor())) {
+    		this.token = proximo_token();
+    		
+    		if(this.token.getValor().matches(this.identificador)) {
+        		this.token = proximo_token();
+        		maisParametros();
+        		
+    		} else {
+                System.out.println("ERRO");
+
+    		}
+
+    	}
+    }
+    
+    private void maisParametros() {
+    	
+    	if(this.token.getValor().equals(",")) {
+    		this.token = proximo_token();
+    		listaParametros();
+    	}
+    	
+    }
+
+    
+    private void escopoMetodo() {}
+    
+    
+    private void chamadaDeMetodo() {}
+    
+    private void var() {}
+
+    private void maisVariavel() {}
+
+    private void metodoParametro() {}
+    
+    private void declaracaoVariaveis() {}
+
+
+
+    
+
+    
 }

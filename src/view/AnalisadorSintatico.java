@@ -39,11 +39,25 @@ public class AnalisadorSintatico {
         tipo.add("boleano");
         tipo.add("texto");
     
+        
         //Identificadores
+    }
+    
+    //fiz esse método só pra testar se tem algo na lista mesmo.
+    private void estaPresenteNaListaDeTokens(String s){
+        
+        for(Token t : this.listaDeTokens){
+            if(t.getValor().equals(s))
+                System.out.println("Sim");
+        }
+        
+        System.out.println("Não");
     }
     
     public void executar(){
      
+        estaPresenteNaListaDeTokens(":");
+        
         this.token = proximo_token();
         
         programa();
@@ -72,7 +86,7 @@ public class AnalisadorSintatico {
                 
                 this.token = proximo_token();
                 blocoConstantes();
-                this.token= proximo_token();
+                this.token= proximo_token(); //"metodo"
                 escopoPrograma();
                 this.token = proximo_token();
                 
@@ -126,12 +140,12 @@ public class AnalisadorSintatico {
 
     private void escopoPrograma() {
         if(this.token.pertenceAoPrimeiroDe("metodo")){
-        	
+            metodo();//token = "metodo"
             this.token = proximo_token();
             
             if(this.token.pertenceAoPrimeiroDe("escopoPrograma")){
                 this.token = proximo_token();
-                
+                System.out.println(token);
                 return;
             }else{
                 System.out.println("ERRO: falta a assinatura do metodo");
@@ -318,8 +332,8 @@ public class AnalisadorSintatico {
             		this.token = proximo_token();
         			listaParametros();
         			
-        			if(this.token.equals(")")){
-                		this.token = proximo_token();
+        			if(this.token.equals(")")){ 
+                		this.token = proximo_token();//token = )
                 		
                 		if(this.token.equals(":")){
                     		this.token = proximo_token();

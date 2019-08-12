@@ -1,5 +1,6 @@
 package view;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -13,18 +14,35 @@ public class Compilador {
 	 * @throws ModoException 
      */
     public static void main(String[] args) throws IOException, ModoException {
+        ArrayList<Token> listaDeTokens;    	
+    	File file = new File("teste\\");
+    	File[] arquivos = file.listFiles();
     	
-      ArrayList<Token> listaDeTokens;
-      
-      //executa o analisador lexico e obtem a lista de tokens
-      AnalisadorLexico al = new AnalisadorLexico();
-      listaDeTokens = al.executar("teste_pedro.txt");
-      
-      //executa o analisador sintático
-      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
-      as.executar();
-      
+    	int i =0;
     	
-    }
+    	while (i< arquivos.length) {
+    		
+    		if(arquivos[i].getName().endsWith(".txt"))
+    		{       			
+    			//executa o analisador lexico e obtem a lista de tokens
+    		      AnalisadorLexico al = new AnalisadorLexico();
+    		      listaDeTokens = al.executar(arquivos[i].getPath());
+    		      
+    		      if(al.getErro().isEmpty()) {
+    		      
+	    		      //executa o analisador sintático
+	    		      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
+	    		      as.executar(); 
+    		      } else {
+    		    	  System.out.println("\nErro l�xico no arquivo: " + arquivos[i].getPath() + "\n");
+    		      }
+    		}
+    		
+    		i++;
+    	}
+
+      
+   }
+   
 	
 }

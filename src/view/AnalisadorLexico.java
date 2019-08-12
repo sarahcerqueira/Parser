@@ -751,5 +751,9 @@ public class AnalisadorLexico {
 		}
 
 	}
+	
+	public ArrayList<Token> getErro(){
+		return this.listaDeErro;
+	}
 
 }

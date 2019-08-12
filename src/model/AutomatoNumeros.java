@@ -89,7 +89,6 @@ public class AutomatoNumeros extends Automato {
             
         }
         
-		this.estado = -1;
         return false;
     }
     

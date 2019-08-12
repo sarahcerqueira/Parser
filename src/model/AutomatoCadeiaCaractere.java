@@ -64,14 +64,11 @@ public class AutomatoCadeiaCaractere extends Automato {
              break;
                     
             }case(3):{
-        		this.estado = -1;
                 return false;
             }
         }
         
         
-        this.estado = -1;
-
     
     return false;
     }

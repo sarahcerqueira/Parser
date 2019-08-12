@@ -45,7 +45,6 @@ public class AutomatoIdentificador extends Automato  {
             }
         }
         
-		this.estado = -1;
         return false;
         
     }
@@ -55,8 +54,11 @@ public class AutomatoIdentificador extends Automato  {
      */
     @Override
     public boolean isEstadoFinal(){
+    	if (estado == 1) {
+    		return true;
+    	}
         
-        return this.estado == 1;
+        return false;
     }
     
 }

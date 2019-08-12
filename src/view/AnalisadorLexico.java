@@ -11,17 +11,12 @@ import java.util.ArrayList;
 
 import model.AutomatoCadeiaCaractere;
 import model.AutomatoComentario;
-import model.AutomatoDelimitador;
 import model.AutomatoIdentificador;
 import model.AutomatoNumeros;
-import model.AutomatoOperAritmetico;
-import model.AutomatoOperLogico;
-import model.AutomatoOperRelacionais;
 import util.Classe;
 import util.ManipuladorDeArquivo;
 import util.Modo;
 import util.ModoException;
-import util.PalavraReservada;
 import util.Token;
 
 /**
@@ -33,585 +28,727 @@ public class AnalisadorLexico {
 
 	private AutomatoCadeiaCaractere cadeia;
 	private AutomatoComentario comentario;
-	private AutomatoDelimitador delimitador;
 	private AutomatoIdentificador identificador;
 	private AutomatoNumeros numero;
-	private AutomatoOperAritmetico aritmetico;
-	private AutomatoOperLogico logico;
-	private AutomatoOperRelacionais relacional;
 	private ArrayList<Token> listaDeTokens;
 	private ArrayList<Token> listaDeErro;
-
+	private ArrayList<String> palavraReservada;
+	private ManipuladorDeArquivo leitura;
 	private String lexema;
+	private char prox;
+	private char atual;
+	private int linha;
 
-	public ArrayList<Token> gerarListaDeTokens(String arquivo) throws FileNotFoundException, IOException, ModoException {
-
-		this.inicializar();
-		ManipuladorDeArquivo leitura = new ManipuladorDeArquivo(arquivo, Modo.LEITURA);
-
-		Classe classe = Classe.NULL; // Para Operadores e delimitadores
-		Classe classe1 = Classe.NULL; // Para comentarios, Numeros, identificadores, cadeias
-
-		char c;
-		char proximo = ' '; // Pr�ximo caractere
-		boolean aceito = false; // Aceito, automato em estado final
-		boolean ajuste = true; // Se proximo for usado
-		boolean ativo = false; // Auxilia na verifica��o de erros
-		boolean fim = false; // Flag auxiliar apar determian o fim da classifica��o
-		boolean loop = leitura.hasNextCaractere(); // verifica se h� caractere h� ser lido
-		int linha = 1; // Conta as linhas
-
-		// Este loop faz todo processo de classifica��o
-		while (loop) {
-
-			c = proximo;
-			proximo = leitura.nextCaractere();
-
-			// Se ajuste � falso significa que o pr�ximo n�o foi utilizado em apenas um loop
-			if (!ajuste) {
-
-				if (c == '\r' || c == '\n' || c == '\t') {
-
-					// Aceito significa que h� um token salvar
-					if (aceito) {
-						this.classificao(classe1, linha);
-						this.resetLexema();
-						this.resetAutomatos();
-						classe1 = Classe.NULL;
-						aceito = false;
-						ativo = true;
-
-					} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.COMENTARIO)) {
-						classe1 = Classe.ERRO;
-						this.classificao(classe1, linha);
-						this.resetLexema();
-						classe1 = Classe.NULL;
-						this.resetAutomatos();
-					}
-
-					if (c == '\n') {
-						linha++;
-
-					}
-
-					if (!classe1.equals(Classe.COMENTARIO) && !classe1.equals(Classe.CADEIA_DE_CARACTERES)) {
-						ativo = true;
-					}
-
-				} else if (c == ' ') {
-
-					if (aceito) {
-						this.classificao(classe1, linha);
-						this.resetLexema();
-						classe1 = Classe.NULL;
-						this.resetAutomatos();
-						aceito = false;
-
-					} else if (classe1.equals(Classe.ERRO)) {
-						this.classificao(classe1, linha);
-						this.resetLexema();
-						classe1 = Classe.NULL;
-						this.resetAutomatos();
-
-					} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.CADEIA_DE_CARACTERES)
-							&& !classe1.equals(Classe.COMENTARIO) && !classe1.equals(Classe.NUMERO)) {
-						classe = Classe.ERRO;
-						this.classificao(classe1, linha);
-						this.resetLexema();
-						classe1 = Classe.NULL;
-						this.resetAutomatos();
-					}
-
-					if (!classe1.equals(Classe.CADEIA_DE_CARACTERES) && !classe1.equals(Classe.COMENTARIO)
-							&& !classe1.equals(Classe.NUMERO)) {
-						ativo = true;
-					}
-				}
-
-				// Checa se o caracter � um delimitador ou operador.
-				classe = this.isdelimitacao(c);
-
-				//Se classe � NULL c n�o � operador nem delimitador
-				if (!classe.equals(Classe.NULL)) {
-
-					switch (classe.getClasse()) {
-
-					case ("DELIMITADOR"):
-						
-						// O ponto tamb�m pode fazer parte de um n�mero
-						if (classe1.equals(Classe.NUMERO) && c == '.') {
-							
-							classe = Classe.NULL;
-							break;
-						}
-						
-						//Se aceito � true, significa que antes do delimitador havia um token formado
-						if (aceito) {
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-							aceito = false;
-							
-						/*Se Aceito � false e um delimitador foi encontrado o lexema anterior est�
-						 * incompleto logo � considerado erro. Entretanto se classe1 � um comet�rio
-						 * ou cadeia de caracteres eles aceitam tamb�m delimitadores e operadores logicos*/
-						} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.COMENTARIO)
-								&& !classe1.equals(Classe.CADEIA_DE_CARACTERES)) {
-							
-							classe1 = Classe.ERRO;
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-						}
-
+	public ArrayList<Token> executar(String arquivo) throws FileNotFoundException, IOException, ModoException {
+		leitura = new ManipuladorDeArquivo(arquivo, Modo.LEITURA);
+		inicializar();
+		atual = leitura.nextCaractere();
+		prox = leitura.nextCaractere();
+		linha = 0;
+		
+		while(atual != '\0') {
+			
+			if(Character.toString(atual).matches("[a-zA-Z]")){
+				identificador();
+				
+			} else if (Character.toString(atual).matches("[0-9]")) {
+				numero();
+			
+			}else if( atual == '+' | atual == '-' | atual =='*' | atual =='/') {
+				
+				if(atual == '/' && (prox == '/' | prox == '*')){
+					comentario();
+				} else {
+				
+					operadorAritmetico();}
+				
+			} else if(atual == '!' | atual =='=' | atual == '<' | atual =='>') {
+				
+				if((atual == '!' && prox == '=') | atual != '!') {
 					
-						if ((!classe1.equals(Classe.COMENTARIO) && !classe1.equals(Classe.CADEIA_DE_CARACTERES))
-								|| (classe1.equals(Classe.COMENTARIO) && aceito)
-								|| (classe1.equals(Classe.CADEIA_DE_CARACTERES) && aceito)) {
-
-							this.concat(c);
-							this.classificao(classe, linha);
-							this.resetLexema();
-
-						} else {
-							classe = Classe.NULL;
-						}
-
-						break;
-
-					case ("OPERADOR LOGICO"):
-						if (aceito) {
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-							aceito = false;
-
-						} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.COMENTARIO)
-								&& !classe1.equals(Classe.CADEIA_DE_CARACTERES)) {
-							classe1 = Classe.ERRO;
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-						}
-
-						if ((!classe1.equals(Classe.COMENTARIO) && !classe1.equals(Classe.CADEIA_DE_CARACTERES))
-								|| (classe1.equals(Classe.COMENTARIO) && aceito)
-								|| (classe1.equals(Classe.CADEIA_DE_CARACTERES) && aceito)) {
-
-							this.concat(c);
-							this.classificao(classe, linha);
-
-							if (this.logico.isOperLogico(proximo)) {
-								ajuste = true;
-								this.apagaTokenAnt();
-								this.concat(proximo);
-								this.classificao(classe, linha);
-							}
-
-							this.resetLexema();
-						} else {
-							classe = Classe.NULL;
-						}
-
-						break;
-
-					case ("OPERADOR ARITMETICO"):
-
-						if (c == '/' && (proximo == '/' || proximo == '*')) {
-							classe1 = Classe.COMENTARIO;
-							classe = Classe.NULL;
-							break;
-						} else if (classe1.equals(Classe.COMENTARIO)) {
-							classe = Classe.NULL;
-							break;
-						}
-
-						if (aceito) {
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-							aceito = false;
-
-						} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.COMENTARIO)
-								&& !classe1.equals(Classe.CADEIA_DE_CARACTERES)) {
-							classe1 = Classe.ERRO;
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-						}
-
-						if ((!classe1.equals(Classe.COMENTARIO) && !classe1.equals(Classe.CADEIA_DE_CARACTERES))
-								|| (classe1.equals(Classe.COMENTARIO) && aceito)
-								|| (classe1.equals(Classe.CADEIA_DE_CARACTERES) && aceito)) {
-							this.concat(c);
-							this.classificao(classe, linha);
-
-							if (this.aritmetico.isOperAritmetico(proximo)) {
-								ajuste = true;
-								this.apagaTokenAnt();
-								this.concat(proximo);
-								this.classificao(classe, linha);
-							}
-							this.resetLexema();
-						} else {
-							classe = Classe.NULL;
-						}
-
-						break;
-
-					case ("OPERADOR RELACIONAL"):
-						if (aceito) {
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							this.resetAutomatos();
-							classe1 = Classe.NULL;
-							aceito = false;
-
-						} else if (!classe1.equals(Classe.NULL) && !classe1.equals(Classe.COMENTARIO)
-								&& !classe1.equals(Classe.CADEIA_DE_CARACTERES)) {
-							classe1 = Classe.ERRO;
-							this.classificao(classe1, linha);
-							this.resetLexema();
-							classe1 = Classe.NULL;
-							this.resetAutomatos();
-						}
-
-						if ((!classe1.equals(Classe.COMENTARIO) && !classe1.equals(Classe.CADEIA_DE_CARACTERES))
-								|| (classe1.equals(Classe.COMENTARIO) && aceito)
-								|| (classe1.equals(Classe.CADEIA_DE_CARACTERES) && aceito)) {
-
-							this.concat(c);
-
-							this.classificao(classe, linha);
-
-							if (this.relacional.isOperRelacional(proximo)) {
-								ajuste = true;
-								this.apagaTokenAnt();
-								this.concat(proximo);
-								this.classificao(classe, linha);
-							} else {
-
-								this.resetDelimitacao();
-
-								if (this.relacional.isOperRelacional(proximo)) {
-									ajuste = true;
-									this.apagaTokenAnt();
-									this.concat(proximo);
-									classe = Classe.ERRO;
-									this.classificao(classe, linha);
-								}
-							}
-
-							this.resetLexema();
-						} else {
-							classe = Classe.NULL;
-						}
-
-						break;
-
-					}// Fim switch
-
-				/*Se c n�o � operador nem delimitado, e classe1 ainda � NULL, c pode ser numero
-				 * comentario, identificado, ou uma cadeia*/
+					operadorRelacinal();
 					
 				} else {
-					if (classe1.equals(Classe.NULL)) {
-						classe1 = this.getClasse(c);
-					}
-					
-					this.resetDelimitacao(); 
-
-				}
+					operadorLogico();
+				} 
 				
-				/*Se classe == NULL e ativo � falso significa que n�o houve classifica��o antes
-				 * e ent�o aqui os automatados devem continuar identificando*/
-				if (classe.equals(Classe.NULL) && !ativo) {
-					
-					switch (classe1.getClasse()) {
-
-					case ("COMENTARIO"):
-						if (this.comentario.isComentario(c)) {
-							aceito = this.comentario.isEstadoFinal();
-						} else if (this.comentario.isEstadoErro()) {
-							classe1 = Classe.ERRO;
-						}
-
-						this.concat(c);
-
-						if (fim && aceito) {
-							this.classificao(classe1, linha);
-
-						} else if (fim && !aceito) {
-							this.classificao(Classe.ERRO, linha);
-
-						}
-
-						break;
-					case ("IDENTIFICADOR"):
-						if (this.identificador.isIdentificador(c)) {
-							aceito = this.identificador.isEstadoFinal();
-						} else if (this.identificador.isEstadoErro()) {
-							classe1 = Classe.ERRO;
-						}
-
-						this.concat(c);
-
-						if (fim && aceito) {
-							this.classificao(classe1, linha);
-
-						} else if (fim && !aceito) {
-							this.classificao(Classe.ERRO, linha);
-
-						}
-
-						break;
-					case ("NUMERO"):
-						if (this.numero.isNumero(c)) {
-							aceito = this.numero.isEstadoFinal();
-						} else if (this.numero.isEstadoErro()) {
-							classe1 = Classe.ERRO;
-						}
-
-						this.concat(c);
-
-						if (fim && aceito) {
-							this.classificao(classe1, linha);
-
-						} else if (fim && !aceito) {
-							this.classificao(Classe.ERRO, linha);
-
-						}
-
-						break;
-					case ("CADEIA DE CARACTERES"):
-						if (this.cadeia.isCadeiaCaractere(c)) {
-							aceito = this.cadeia.isEstadoFinal();
-						} else if (this.cadeia.isEstadoErro()) {
-							classe1 = Classe.ERRO;
-						}
-
-						this.concat(c);
-
-						if (fim && aceito) {
-							this.classificao(classe1, linha);
-
-						} else if (fim && !aceito) {
-							this.classificao(Classe.ERRO, linha);
-
-						}
-
-						break;
-					case ("NULL"):
-						classe1 = Classe.ERRO;
-						aceito = true;
-						this.concat(c);
-						break;
-
-					case ("ERRO"):
-						this.concat(c);
-					}
-
-				}
+			} else if(atual == '|' | atual == '&') {
 				
-			} else {
-				ajuste = false;
+				operadorLogico();
+				
+			} else if(atual == ','| atual == '(' | atual == ')' | atual == '[' | atual == ']'
+					| atual == '.' | atual == '{' | atual == '}' | atual == ';') {
+				
+				delimitador();
+				
+			} else if(atual == '"') {
+				cadeiaCaracteres();
+			
+			}else if (atual == '\n' | atual == '\t' | atual ==' ' | atual=='\r') {
+				
+				if(atual == '\n') {
+					linha = linha + 1;
+					}
+				this.atualizaChar();
+				
+			} else if ((int)atual > 31 && (int)atual < 127) {
+				simbolo();
+				
 			}
-
-			if (ativo) {
-				ativo = false;
-			}
-
-			loop = leitura.hasNextCaractere();
-
-			if (!loop && !fim) {
-
-				fim = true;
-				loop = true;
-
-			} else if (!loop && fim) {
-				loop = false;
+			else {
+				erro();
 			}
 		}
 		
 		leitura.fechaArquivo();
-		ManipuladorDeArquivo escrita = new ManipuladorDeArquivo(arquivo + ".saida", Modo.ESCRITA);
-
-		for (int i = 0; i < this.listaDeTokens.size(); i++) {
-			if (i == 0) {
-				System.out.println("Tokens V�lidos\n");
-				escrita.escreverArquivo("Tokens V�lidos\r\n");
-			}
-			Token t = this.listaDeTokens.get(i);
-			System.out.println(t.getLinha() + " " + t.getValor() + " " + t.getClasse().getClasse());
-			escrita.escreverArquivo(t.getLinha() + " " + t.getValor() + " " + t.getClasse().getClasse() + "\r\n");
-		}
-
-		for (int i = 0; i < this.listaDeErro.size(); i++) {
-			if (i == 0) {
-				System.out.println("\nTokens Inv�lidos\n");
-				escrita.escreverArquivo("\r\nTokens Inv�lidos\r\n");
-			}
-			Token t = this.listaDeErro.get(i);
-			System.out.println(t.getLinha() + " " + t.getValor() + " " + t.getClasse().getClasse());
-			escrita.escreverArquivo(t.getLinha() + " " + t.getValor() + " " + t.getClasse().getClasse() + "\r\n");
-
-		}
-
-		escrita.fechaArquivo();
-                        
-                return this.listaDeTokens;
+		
+		escreveSaida(arquivo);
+		
+		return this.listaDeTokens;
+			
 	}
 
-	private Classe isdelimitacao(char c) {
+		
 
-		if (this.delimitador.isdelimitado(c)) {
-			return Classe.DELIMITADOR;
-
-		} else if (this.aritmetico.isOperAritmetico(c)) {
-			return Classe.OPERADOR_ARITMETICO;
-
-		} else if (this.logico.isOperLogico(c)) {
-			return Classe.OPERADOR_LOGICO;
-
-		} else if (this.relacional.isOperRelacional(c)) {
-			return Classe.OPERADOR_RELACIONAL;
-
-		}
-
-		return Classe.NULL;
+	private void simbolo() {
+		this.concat(atual);
+		this.atualizaChar();
+		this.createToken(Classe.SIMBOLO, linha);
+		lexema ="";
+		
 	}
 
-	private void apagaTokenAnt() {
-		int size = this.listaDeTokens.size();
 
-		if (size != 0) {
-			this.listaDeTokens.remove(size - 1);
+
+	private void operadorLogico() {
+		this.concat(atual);
+		
+		if((atual == '|' && prox == '|') |(atual == '&' && prox == '&') | atual == '!') {
+			
+			if((atual == '|' && prox == '|') |(atual == '&' && prox == '&')) {
+			
+			this.concat(prox);
+			this.atualizaChar(); }
+			
+		
+			if(prox == '|' | prox =='&' | prox == '!'){
+				this.atualizaChar();
+				erroLogico();
+				
+			} else {
+				this.createToken(Classe.OPERADOR_LOGICO, linha);
+				this.atualizaChar();
+			
 		}
-
-	}
-
-	private Classe getClasse(char c) {
-		int ascii = (int) c;
-
-		if (c == '"') {
-			return Classe.CADEIA_DE_CARACTERES;
-
-		} else if (c == '/') {
-			return Classe.COMENTARIO;
-
-		} else if (ascii > 47 && ascii < 58) {
-
-			if (this.getToken(-1).getValor().equals("-")) {
-				Classe cl = this.getToken(-2).getClasse();
-
-				// Verifica se h� - que oderia ser classificado como parte de um n�mero
-				if (!cl.equals(Classe.NUMERO) && !cl.equals(Classe.IDENTIFICADOR)) {
-					this.listaDeTokens.remove(this.listaDeTokens.size() - 1);
-					this.lexema = "-";
-				}
-			}
-			return Classe.NUMERO;
-
-		} else if ((ascii > 96 && ascii < 123) || (ascii > 64 && ascii < 91)) {
-			return Classe.IDENTIFICADOR;
-		}
-
-		return Classe.NULL;
-	}
-
-	private void classificao(Classe classe, int linha) {
-
-		if (!classe.equals(Classe.ERRO)) {
-
-			if (classe.equals(Classe.COMENTARIO)) {
-
-				this.lexema = this.lexema.replaceAll("\r", "");
-			} else if (classe.equals(Classe.IDENTIFICADOR) && isPalavraReservada(lexema)) {
-				classe = Classe.PALAVRA_RESERVADA;
-			}
-
-			this.listaDeTokens.add(this.createToken(this.lexema, classe, linha));
-
+		
 		} else {
-			this.listaDeErro.add(this.createToken(this.lexema, classe, linha));
+			this.atualizaChar();
+			erroLogico();
+
 		}
+		
+		lexema ="";
+		
+		
+	}
+
+
+
+	private void erroLogico() {
+				
+	
+		while(atual== '!' | atual =='&' | atual =='|' ){
+						
+			this.concat(atual);
+
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					atual = prox;
+					prox = '\0';
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+
+		}
+		
+		this.createErro(linha);
+		
+		
+	}
+
+
+
+	private void comentario() {
+		this.comentario.isComentario(atual);
+		
+		do {
+			this.concat(atual);
+			
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					
+					atual = prox;
+					prox = '\0';
+					
+					if (this.comentario.isComentario(atual)){
+						concat(atual);
+						this.atualizaChar();
+					}
+					
+
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} while(this.comentario.isComentario(atual));
+		
+		
+		
+		if (this.isSeparador(atual) && comentario.isEstadoFinal()) {
+		
+			this.createToken(Classe.COMENTARIO, linha);
+			
+		} else {
+			erro();
+		}
+		
+		this.comentario.resetAutomato();
+		lexema ="";
+
+		
+	}
+
+
+
+	private void erro() {
+		
+		while(!this.isSeparador(atual)) {
+					
+			this.concat(atual);
+					
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();	
+				} else {
+					atual = prox;
+					prox = '\0';
+
+					if(!this.isSeparador(atual)) {
+						this.concat(atual);
+						this.atualizaChar();
+					}
+					
+					break;
+				}			
+		
+						
+				} catch (IOException e) {
+						// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ModoException e) {
+						// TODO Auto-generated catch block
+					e.printStackTrace();
+					}
+			}
+				
+		this.createErro(linha);
+		
+	}
+
+
+
+	private void cadeiaCaracteres() {
+		this.cadeia.isCadeiaCaractere(atual);
+		
+		do {
+			this.concat(atual);
+			
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					
+					atual = prox;
+					prox = '\0';
+					
+					if(this.cadeia.isCadeiaCaractere(atual)) {
+						concat(atual);
+						this.atualizaChar();
+					}
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} while(this.cadeia.isCadeiaCaractere(atual));
+		
+		
+		
+		if (this.isSeparador(atual) && cadeia.isEstadoFinal()) {
+		
+			this.createToken(Classe.CADEIA_DE_CARACTERES, linha);
+			
+		} else {
+			erro();
+		}
+		
+		this.cadeia.resetAutomato();
+		lexema ="";
 
 	}
+
+
+
+	private void delimitador() {
+		
+		this.concat(atual);
+		this.atualizaChar();
+		this.createToken(Classe.DELIMITADOR, linha);
+		lexema ="";
+
+				
+	}
+
+
+
+	private void operadorRelacinal() {
+		
+		this.concat(atual);
+		
+		if((atual == '!' && prox == '=') |(atual == '=' && prox == '=') | (atual == '<' && prox == '=')|
+				(atual == '>' && prox == '=')) {
+			this.concat(prox);
+			this.atualizaChar();
+		} 
+		
+		if(prox == '!' | prox == '=' | prox == '<' | prox == '>'){
+			this.atualizaChar();
+			erroRelacional();
+			
+		} else {
+			this.createToken(Classe.OPERADOR_RELACIONAL, linha);
+			this.atualizaChar();
+
+			
+		}
+		
+		lexema ="";
+		
+		
+	}
+
+
+
+	private void erroRelacional() {
+				
+		while(atual== '=' | atual =='!' | atual =='<' | atual=='>' ){
+						
+			this.concat(atual);
+
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					atual = prox;
+					prox = '\0';
+					
+					if(atual== '=' | atual =='!' | atual =='<' | atual=='>') {
+						this.concat(atual);
+						this.atualizaChar();
+					}
+					
+
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+
+		}
+		
+		this.createErro(linha);
+	
+		
+	}
+
+
+
+	private void operadorAritmetico() {
+		
+		this.concat(atual);
+		
+		if((atual == '+' && prox == '+') |(atual == '-' && prox == '-')) {
+			this.concat(prox);
+			this.atualizaChar();
+		} 
+		
+		
+		if(prox == '+' | prox == '-' | prox == '*' ){
+			this.atualizaChar();
+			erroAritmetico();
+			
+		} else {
+			this.createToken(Classe.OPERADOR_ARITMETICO, linha);
+			this.atualizaChar();
+
+			
+		}
+		
+		lexema ="";
+		
+	}
+
+
+
+	private void erroAritmetico() {
+		
+		
+		while(atual== '*' | atual =='+' | atual =='-' | (atual=='/' && prox != '/')){
+						
+			this.concat(atual);
+
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					atual = prox;
+					prox = '\0';
+					
+					if (atual== '*' | atual =='+' | atual =='-' | (atual=='/' && prox != '/')) {
+						this.concat(atual);
+						this.atualizaChar();
+					}
+					
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+
+		}
+		
+		this.createErro(linha);
+	
+		
+	}
+
+
+
+	private void numero() {
+
+		this.numero.isNumero(atual);
+		
+		do {
+			this.concat(atual);
+			
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					
+					atual = prox;
+					prox = '\0';
+					
+					if(this.comentario.isComentario(atual)) {
+						this.concat(atual);
+						this.atualizaChar();
+					}
+
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} while(this.numero.isNumero(atual));
+		
+		
+		
+		if (atual !='.' && this.isSeparador(atual) && this.numero.isEstadoFinal()) {
+			
+			this.createToken(Classe.NUMERO, linha);
+		
+		} else {
+			erroNumero();
+		}
+		
+		this.numero.resetAutomato();
+
+		lexema ="";
+
+	}
+
+
+
+	private void erroNumero() {
+		
+		while(atual == '.' | !this.isSeparador(atual)) {
+			
+			this.concat(atual);
+			
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();
+					
+				} else {
+					atual = prox;
+					prox = '\0';
+					
+					if(atual == '.' | !this.isSeparador(atual)) {
+						this.concat(atual);
+						this.atualizaChar();
+					}
+					break;
+				}			
+
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		this.createErro(linha);
+		
+	}
+
+
+
+	private void identificador() {
+		
+		this.identificador.isIdentificador(atual);
+		
+		do {
+			this.concat(atual);
+			
+			try {
+				if(leitura.hasNextCaractere()) {
+					atual = prox;
+					prox = leitura.nextCaractere();					
+				} else {
+					
+					atual = prox;
+					prox = '\0';
+					
+					if(this.identificador.isIdentificador(atual)){
+						this.concat(atual);
+						this.atualizaChar();
+					}					
+
+					break;
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ModoException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} while(this.identificador.isIdentificador(atual));
+		
+		
+		
+		if (this.isSeparador(atual) && this.identificador.isEstadoFinal()) {
+		
+			if(this.palavraReservada.contains(lexema)){
+				
+				this.createToken(Classe.PALAVRA_RESERVADA, linha);
+			} else {
+				
+				this.createToken(Classe.IDENTIFICADOR, linha);
+			}
+			
+			
+		} else {
+			erro();
+		}
+		
+		this.identificador.resetAutomato();
+		lexema ="";
+
+		
+	}
+
+	private boolean isSeparador(char c) {
+		 
+		if(c == ' ' | c =='\t' | c == '\n' | c =='+' | c == '-' | c =='*' | c =='/' | c =='!' | c =='=' | c =='<'|
+				c =='>'| c =='&'|c =='|' |c ==';' | c ==',' | c =='('| c ==')'| c =='[' | c ==']' | c =='{' | c =='}'
+				| c =='.' | c ==':' | c=='\r' | ((int)c > 31 && (int) c < 127)) {
+			
+			return true;
+		}
+		
+		return false;
+			 
+	}
+
+
+	
 
 	public void inicializar() {
 		this.cadeia = new AutomatoCadeiaCaractere();
 		this.comentario = new AutomatoComentario();
-		this.delimitador = new AutomatoDelimitador();
 		this.identificador = new AutomatoIdentificador();
 		this.numero = new AutomatoNumeros();
-		this.aritmetico = new AutomatoOperAritmetico();
-		this.logico = new AutomatoOperLogico();
-		this.relacional = new AutomatoOperRelacionais();
 
 		this.listaDeTokens = new ArrayList<>();
 		this.listaDeErro = new ArrayList<>();
-		this.lexema = "";
+		this.palavraReservada = new ArrayList<>();
+		this.lexema = "";		
+		
+		this.palavraReservada.add("programa");
+		this.palavraReservada.add("constantes");
+		this.palavraReservada.add("variaveis");
+		this.palavraReservada.add("metodo");
+		this.palavraReservada.add("resultado");
+		this.palavraReservada.add("principal");
+		this.palavraReservada.add("se");
+		this.palavraReservada.add("entao");
+		this.palavraReservada.add("senao");
+		this.palavraReservada.add("enquanto");
+		this.palavraReservada.add("leia");
+		this.palavraReservada.add("escreva");
+		this.palavraReservada.add("vazio");
+		this.palavraReservada.add("inteiro");
+		this.palavraReservada.add("real");
+		this.palavraReservada.add("boleano");
+		this.palavraReservada.add("texto");
+		this.palavraReservada.add("verdadeiro");
+		this.palavraReservada.add("falso");
+		
 	}
 
-	private void resetAutomatos() {
-		this.cadeia.resetAutomato();
-		this.comentario.resetAutomato();
-		this.identificador.resetAutomato();
-		this.numero.resetAutomato();
+	private void createToken(Classe classe, int linha) {
+		this.listaDeTokens.add(new Token(lexema, classe, linha));
 	}
-
-	private void resetDelimitacao() {
-		this.aritmetico.resetAutomato();
-		this.logico.resetAutomato();
-		this.relacional.resetAutomato();
-	}
-
-	private Token createToken(String valor, Classe classe, int linha) {
-		return new Token(valor, classe, linha);
-	}
-
-	private boolean isPalavraReservada(String lexema) {
-
-		return (lexema.equals(PalavraReservada.BOOLEANO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.CONSTANTES.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.ENQUANTO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.ENTAO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.ESCREVA.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.FALSO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.INTEIRO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.LEIA.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.METODO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.PRINCIPAL.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.PROGRAMA.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.REAL.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.RESULTADO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.SE.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.SENAO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.TEXTO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.VARIAVEIS.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.VAZIO.getPalavraReservada())
-				|| lexema.equals(PalavraReservada.VERDADEIRO.getPalavraReservada()));
-
+	
+	private void createErro(int linha) {
+		this.listaDeErro.add(new Token(lexema, Classe.ERRO, linha));
 	}
 
 	public void concat(char c) {
 		this.lexema += Character.toString(c);
 	}
 
-	private void resetLexema() {
-		this.lexema = "";
+	public void atualizaChar() {
+		
+		try {
+			if(leitura.hasNextCaractere()) {
+				atual = prox;
+				prox = leitura.nextCaractere();
+			} else {
+				atual = prox;
+				prox = '\0';
+
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ModoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	private Token getToken(int index) {
-		Token t = this.listaDeTokens.get(this.listaDeTokens.size() + index);
+	
+	private void escreveSaida(String arquivo) {
+		arquivo = arquivo.substring(0,  arquivo.indexOf("."));
+		
+		ManipuladorDeArquivo escrita;
+		try {
+			escrita = new ManipuladorDeArquivo(arquivo + ".saida", Modo.ESCRITA);
+		
 
-		return t;
+		for (int i = 0; i < this.listaDeTokens.size(); i++) {
+			if (i == 0) {
+				System.out.println("Tokens Validos\n");
+				escrita.escreverArquivo("Tokens Validos\r\n");
+			}
+			Token t = this.listaDeTokens.get(i);
+			System.out.println(t.getLinha() + " - " + t.getValor() + " - " + t.getClasse().getClasse());
+			escrita.escreverArquivo(t.getLinha() + " - " + t.getValor() + " - " + t.getClasse().getClasse() + "\r\n");
+		}
+
+		for (int i = 0; i < this.listaDeErro.size(); i++) {
+			if (i == 0) {
+				System.out.println("\nTokens Invalidos\n");
+				escrita.escreverArquivo("\r\nTokens Invalidos\r\n");
+			}
+			Token t = this.listaDeErro.get(i);
+			System.out.println(t.getLinha() + " - " + t.getValor() + " - " + t.getClasse().getClasse());
+			escrita.escreverArquivo(t.getLinha() + " - " + t.getValor() + " - " + t.getClasse().getClasse() + "\r\n");
+
+		}
+		
+		escrita.fechaArquivo();
+
+		
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ModoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 

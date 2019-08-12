@@ -30,21 +30,20 @@ public class Token {
 	public String toString() {
 		return linha + " " + valor + " " + classe;
 	}
-        
-        public boolean pertenceAoPrimeiroDe(String naoTerminal){
-        
-            switch (naoTerminal) {
-                case "escopoPrograma":
-                    return (valor.matches("([a-zA-Z]|[0-9]|_)*") | valor.equals(""));
-                case "metodo":
-                    return valor.equals("metodo");
-                case "multiplasConstantes":    
-                    return valor.equals(",");
-            }
-        
-            return false;
-            
-        }
 	
+	public boolean pertenceAoPrimeiroDe(String naoTerminal){
+        
+        switch (naoTerminal) {
+            case "escopoPrograma":
+                return (valor.matches("([a-zA-Z]|[0-9]|_)*") | valor.equals(""));
+            case "metodo":
+                return valor.equals("metodo");
+            case "multiplasConstantes":    
+                return valor.equals(",");
+        }
+    
+        return false;
+        
+    }
 	
 }

@@ -84,13 +84,11 @@ public class AutomatoComentario extends Automato {
 
 		}
 		case (5): {
-			this.estado = -1;
 			return false;
 		}
 
 		}
 
-		this.estado = -1;
 		return false;
 	}
 

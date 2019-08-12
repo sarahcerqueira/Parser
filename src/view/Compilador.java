@@ -18,7 +18,7 @@ public class Compilador {
       
       //executa o analisador lexico e obtem a lista de tokens
       AnalisadorLexico al = new AnalisadorLexico();
-      listaDeTokens = al.gerarListaDeTokens("teste_pedro.txt");
+      listaDeTokens = al.executar("teste_pedro.txt");
       
       //executa o analisador sintático
       AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);

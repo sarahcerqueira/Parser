@@ -18,17 +18,15 @@ public class AnalisadorSintatico {
 
     private ArrayList<Token> listaDeTokens;
     private ArrayList<String> tipo = new ArrayList();
+    private ArrayList<ErroSintatico> erros;
     private Token token;
-    private final String identificador = "[a-zA-Z]([a-zA-Z]|[0-9]|_)*";
-    private final String digito = "-?[0-9]+(.[0-9]+)?";
-    private final String cadeiaCaracteres = "\"([a-zA-Z])*\"";
-    //private final String operadoresAritmeticos = "(+ | - | * | /)";
-    
+   
 
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens) {
         this.listaDeTokens = listaDeTokens;
         this.listaDeTokens.add(listaDeTokens.size(), new Token("$", Classe.FINALIZADOR, 0)); //add o '$' no final da lista
         this.setup();
+        erros = new ArrayList();
     }
 
     public void setup() {
@@ -42,7 +40,7 @@ public class AnalisadorSintatico {
         //Identificadores
     }
 
-    //fiz esse método só pra testar se tem algo na lista mesmo.
+    //fiz esse metodo sÃ³ pra testar se tem algo na lista mesmo.
     private void estaPresenteNaListaDeTokens(String s) {
 
         for (Token t : this.listaDeTokens) {
@@ -51,7 +49,23 @@ public class AnalisadorSintatico {
             }
         }
 
-        System.out.println("Não");
+        System.out.println("NÃ£o");
+    }
+    
+    
+    private void novoErro(int linha, String erro) {
+    	this.erros.add(new ErroSintatico(linha, erro));
+    }
+    
+    private void recuperacaoDeErro() {
+    	
+    	int linha = this.token.getLinha();
+    	linha++;
+    	
+    	while(!token.getValor().equals("$") && token.getLinha() != linha) {
+            this.token = proximo_token();
+    	}
+    	
     }
 
     public void executar() {
@@ -70,7 +84,7 @@ public class AnalisadorSintatico {
 
     public Token proximo_token() {
         Token t = listaDeTokens.remove(0);
-        System.out.println("Token em análise: " + t.getValor());
+        System.out.println("Token em analise: " + t.getValor());
         return t;
     }
 
@@ -84,30 +98,49 @@ public class AnalisadorSintatico {
 
                 this.token = proximo_token();
                 blocoConstantes();
-                this.token = proximo_token(); //"metodo"
                 escopoPrograma();
 
                 if (this.token.getValor().equals("}")) {
+                    this.token = proximo_token();
                     return;
+                    
                 } else {
-                    //System.out.println("ERRO: está faltando o simbolo }");
-                    return;
+                    
+                	System.out.println("ERRO: esta faltando o simbolo }");
+                	novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo }" );
+                	this.recuperacaoDeErro();
+                  
                 }
 
             } else {
-                System.out.println("ERRO: está faltando o simbolo {");
+            	
+                System.out.println("ERRO: esta faltando o simbolo {");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo {" );
+            	this.recuperacaoDeErro();
             }
 
         } else {
-            System.out.println("ERRO: está faltando a palavra 'programa'");
+        	
+        	novoErro(this.token.getLinha(),"ERRO: esta faltando a palavra 'programa'" );
+        	this.recuperacaoDeErro();
+            System.out.println("ERRO: esta faltando a palavra 'programa'");
         }
 
+    }
+    
+    private void escopoPrograma() {
+        if (this.token.pertenceAoPrimeiroDe("metodo")) {
+            metodo();//token = "metodo"
+            escopoPrograma();
+            
+        } else {
+        	return;
+        }
     }
 
     private void blocoConstantes() {
 
         if (this.token.getValor().equals("constantes")) {
-
             this.token = proximo_token();
 
             if (this.token.getValor().equals("{")) {
@@ -116,93 +149,87 @@ public class AnalisadorSintatico {
                 estruturaConstantes();
 
                 if (this.token.getValor().equals("}")) {
-                    return;
+                    this.token = proximo_token();
+                    
                 } else {
-                    System.out.println("ERRO: está faltando o simbolo }");
+                    System.out.println("ERRO: esta faltando o simbolo }");
+                    novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo }" );
+                	this.recuperacaoDeErro();
                 }
 
             } else {
-                System.out.println("ERRO: está faltando o simbolo {");
+                System.out.println("ERRO: esta faltando o simbolo {");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo {" );
+            	this.recuperacaoDeErro();
             }
 
-        } else if (this.token.getValor().equals("")) {
-            this.token = proximo_token();
-            return;
         } else {
-            System.out.println("ERRO: está faltando a palavra 'constantes'");
+        	return;
         }
 
     }
 
-    private void escopoPrograma() {
-        if (this.token.pertenceAoPrimeiroDe("metodo")) {
-            metodo();//token = "metodo"
-            this.token = proximo_token();
-
-            if (this.token.pertenceAoPrimeiroDe("escopoPrograma")) {
-                this.token = proximo_token();
-                return;
-            } else {
-                //System.out.println("ERRO: falta a assinatura do metodo");
-            }
-        } else if (this.token.getValor().equals("}")) {//mesmo problema checando vazio, melhor checar o }
-            //this.token = proximo_token();
-            return;
-        } else {
-            System.out.println("ERRO: falta a palavra metodo");
-        }
-    }
 
     private void estruturaConstantes() {
+    	
         if (this.tipo.contains(this.token.getValor())) { //se token == tipo
             this.token = proximo_token();
             constantes();
+            
             if (this.token.getValor().equals(";")) {
                 this.token = proximo_token();
                 estruturaConstantes();
+                
+           } else {
+                System.out.println("ERRO: esta faltando o simbolo ;");
+            	novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo ;" );
+            	this.recuperacaoDeErro();
             }
-        } else if (this.token.getValor().equals("}")) {//mesmo problema se checar vazio
-            //this.token = proximo_token();
+            
+        } else {//mesmo problema se checar vazio
             return;
         }
     }
 
     private void constantes() {
-        if (this.token.getValor().matches("([a-zA-Z]|[0-9]|_)*")) { //token == identificador
+        if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) { //token == identificador
             this.token = proximo_token();
+            
             if (this.token.getValor().equals("=")) {
                 this.token = proximo_token();
                 constante();
-                //this.token = proximo_token(); constante já faz isso
                 multiConst();
+                
             } else {
                 System.out.println("ERRO: faltou o caractere =");
+                novoErro(this.token.getLinha(),"ERRO: faltou o caractere =" );
+            	this.recuperacaoDeErro();
             }
         } else {
-            System.out.println("ERRO: declaração de constante sem identificador");
+            System.out.println("ERRO: declaracao de constante sem identificador");
+            novoErro(this.token.getLinha(),"ERRO: declaracao de constante sem identificador" );
+        	this.recuperacaoDeErro();
         }
     }
 
     private void constante() {
-        if (this.token.getValor().matches("[a-zA-Z]([a-zA-Z]|[0-9]|_)*") | this.token.getValor().matches("\"([a-zA-Z])*\"")
-                | this.token.getValor().matches("-?[0-9]+(.[0-9]+)?")) {
+    	
+        if (this.token.getClasse().equals(Classe.IDENTIFICADOR) | this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                | this.token.getClasse().equals(Classe.NUMERO)) {
             this.token = proximo_token();
         } else {
-            System.out.println("ERRO: atribuição de constante sem Numero/CadeiaCaracteres/Identificador");
+            System.out.println("ERRO: atribuicao de constante sem Numero/CadeiaCaracteres/Identificador");
+            novoErro(this.token.getLinha(),"ERRO: atribuicao de constante sem Numero/CadeiaCaracteres/Identificador" );
+        	this.recuperacaoDeErro();
         }
     }
 
     private void multiConst() {
         if (this.token.pertenceAoPrimeiroDe("multiplasConstantes")) {
-            //this.token = proximo_token();
             multiplasConstantes();
-        } else if (this.token.getValor().equals(";")) { /*não vale a pena checar se é igual a vazio, pq se a linha inteiro a = 2;
-             quando o token for ; ele vai querer vazio, e vai dar erro sem estar errado. Outra opção
-             é manter só o if e tirar o resto, funciona tb.*/
-
+            
+        }else {
             return;
-        } else {
-            System.out.println("ERRO: gramatica de multiplas constantes equivocada");
         }
     }
 
@@ -210,8 +237,11 @@ public class AnalisadorSintatico {
         if (this.token.getValor().equals(",")) {
             this.token = proximo_token();
             constantes();
+            
         } else {
-            System.out.println("ERRO: faltou virugula na declaração de multiplas constantes");
+            System.out.println("ERRO: faltou virugula na declaracao de multiplas constantes");
+            novoErro(this.token.getLinha(),"ERRO: faltou virugula na declaracao de multiplas constantes");
+        	this.recuperacaoDeErro();
         }
     }
 
@@ -230,37 +260,49 @@ public class AnalisadorSintatico {
                         this.token = proximo_token();
 
                     } else {
-                        System.out.println("ERRO: faltou ponto e virgula no leia");
+                        System.out.println("ERRO: faltou ; no fim do comando leia");
+                        novoErro(this.token.getLinha(),"ERRO: faltou ; no fim do comando leia");
+                    	this.recuperacaoDeErro();
                     }
                 } else {
-                    System.out.println("ERRO: faltou )");
+                    System.out.println("ERRO: faltou faltou o simbolo)");
+                    novoErro(this.token.getLinha(),"ERRO: faltou faltou o simbolo)");
+                	this.recuperacaoDeErro();
                 }
             } else {
-                System.out.println("ERRO: faltou (");
+                System.out.println("ERRO: faltou o simbolo (");
+                novoErro(this.token.getLinha(),"ERRO: faltou o simbolo (");
+            	this.recuperacaoDeErro();
             }
         } else {
-            System.out.println("ERRO: faltou leia");
+            System.out.println("ERRO: faltou a palavra 'leia'");
+            novoErro(this.token.getLinha(),"ERRO: faltou a palavra 'leia'");
+        	this.recuperacaoDeErro();
 
         }
     }
 
     private void conteudoLeia() {
 
-        if (this.token.getValor().matches(this.identificador)) {
+        if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
             this.token = proximo_token();
             vetor();
             lermais();
+            
         } else {
-            System.out.println("ERRO");
+        	System.out.println("ERRO: faltou paramentros no comando leia");
+            novoErro(this.token.getLinha(),"ERRO: faltou paramentros no comando leia");
+        	this.recuperacaoDeErro();
         }
 
     }
 
     private void lermais() {
+    	
         if (this.token.getValor().equals(",")) {
             this.token = proximo_token();
             conteudoLeia();
-        }
+        } 
     }
 
     private void opIndice() {
@@ -273,14 +315,16 @@ public class AnalisadorSintatico {
     }
 
     private void opI2() {
-        if (this.token.getValor().matches(this.digito)) {
+        if (this.token.getClasse().equals(Classe.NUMERO)) {
             this.token = proximo_token();
 
-        } else if (this.token.getValor().matches(this.identificador)) {
+        } else if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
             this.token = proximo_token();
 
         } else {
-            System.out.println("ERRO");
+        	System.out.println("ERRO: falta um numero ou um identificador");
+            novoErro(this.token.getLinha(),"ERRO: falta um numero ou um identificador");
+        	this.recuperacaoDeErro();
         }
     }
 
@@ -294,7 +338,9 @@ public class AnalisadorSintatico {
                 this.token = proximo_token();
                 matriz();
             } else {
-                System.out.println("ERRO");
+            	System.out.println("ERRO: esta faltando ]");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando ]");
+            	this.recuperacaoDeErro();
 
             }
         }
@@ -306,11 +352,13 @@ public class AnalisadorSintatico {
             opI2();
             opIndice();
 
-            if (this.token.equals(']')) {
+            if (this.token.getValor().equals("]")) {
                 this.token = proximo_token();
 
             } else {
-                System.out.println("ERRO");
+            	System.out.println("ERRO: esta faltando ]");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando ]");
+            	this.recuperacaoDeErro();
 
             }
         }
@@ -321,18 +369,19 @@ public class AnalisadorSintatico {
         if (this.token.getValor().equals("metodo")) {
             this.token = proximo_token();
 
-            if (this.token.getValor().matches(this.identificador)) {
+            if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
                 this.token = proximo_token();
 
                 if (this.token.getValor().equals("(")) {
                     this.token = proximo_token();
                     listaParametros();
+                    
                     if (this.token.getValor().equals(")")) {
-                        this.token = new Token(":", Classe.NULL, 0); System.out.println("Token em analise: :");//remove essa linha quando concertar o léxico
-                        //this.token = proximo_token();//põe essa devolta
-                        if (this.token.getValor().equals(":")) {//poe devolta quando consertar o lexico
+                    	this.token = proximo_token();
+                    	
+                        if (this.token.getValor().equals(":")) {
                             this.token = proximo_token();
-                            //System.out.println(token);
+                            
                             if (this.tipo.contains(this.token.getValor())) {
                                 this.token = proximo_token();
 
@@ -346,37 +395,58 @@ public class AnalisadorSintatico {
 
                                     } else {
                                         System.out.println("ERRO: faltou o }");
+                                        novoErro(this.token.getLinha(),"ERRO: faltou o }");
+                                    	this.recuperacaoDeErro();
 
                                     }
 
                                 } else {
                                     System.out.println("ERRO: faltou o {");
+                                    novoErro(this.token.getLinha(),"ERRO: faltou o {");
+                                	this.recuperacaoDeErro();
 
                                 }
 
                             } else {
                                 System.out.println("ERRO:faltou o tipo do retorno");
+                                novoErro(this.token.getLinha(),"ERRO:faltou o tipo do retorno");
+                            	this.recuperacaoDeErro();
 
                             }
 
                         } else {
                             System.out.println("ERRO: faltou o :");
+                            novoErro(this.token.getLinha(),"ERRO: faltou o :");
+                        	this.recuperacaoDeErro();
+
 
                         }
                     } else {
                         System.out.println("ERRO: faltou o )");
+                        novoErro(this.token.getLinha(),"ERRO: faltou o )");
+                    	this.recuperacaoDeErro();
+
 
                     }
                 } else {
                     System.out.println("ERRO: faltou o (");
+                    novoErro(this.token.getLinha(),"ERRO: faltou o (");
+                	this.recuperacaoDeErro();
+
 
                 }
             } else {
-                System.out.println("ERRO:falta identificação do metodo");
+                System.out.println("ERRO:falta identificacao do metodo");
+                novoErro(this.token.getLinha(),"ERRO:falta identificacao do metodo");
+            	this.recuperacaoDeErro();
+
 
             }
         } else {
-            System.out.println("ERRO:falta a palavra metodo");
+            System.out.println("ERRO:falta a palavra 'metodo'");
+            novoErro(this.token.getLinha(),"ERRO:falta a palavra 'metodo'");
+        	this.recuperacaoDeErro();
+
 
         }
     }
@@ -385,13 +455,14 @@ public class AnalisadorSintatico {
         if (this.tipo.contains(this.token.getValor())) {
             this.token = proximo_token();
 
-            if (this.token.getValor().matches(this.identificador)) {
+            if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
                 this.token = proximo_token();
                 maisParametros();
 
             } else {
-                System.out.println("ERRO");
-
+            	System.out.println("ERRO:falta um identificador");
+                novoErro(this.token.getLinha(),"ERRO:falta um identificador");
+            	this.recuperacaoDeErro();
             }
 
         }
@@ -414,112 +485,46 @@ public class AnalisadorSintatico {
     }
 
     private void chamadaDeMetodo() {
-        if(this.token.getValor().matches(identificador)){
+        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
+            
             if(this.token.getValor().equals("(")){
+                this.token = proximo_token();
                 var();
+                
                 if(this.token.getValor().equals(")")){
                     this.token = proximo_token();
+                    
                 }else{
-                    System.out.println("ERRO");
+                    System.out.println("ERRO: faltou )");
+                    novoErro(this.token.getLinha(),"ERRO: faltou )");
+                	this.recuperacaoDeErro();
                 }
             }else{
-                System.out.println("ERRO");
+                System.out.println("ERRO: faltou (");
+                novoErro(this.token.getLinha(),"ERRO: faltou (");
+            	this.recuperacaoDeErro();
             }
         }else{
-            System.out.println("ERRO");
+            System.out.println("ERRO: falta identificador");
+            novoErro(this.token.getLinha(),"ERRO: falta identificador");
+        	this.recuperacaoDeErro();
         }
     }
 
     private void var() {
-        if(this.token.getValor().matches(identificador)){
+    	
+        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
             vetor();
             maisVariavel();
+            
         }else if(this.token.pertenceAoPrimeiroDe("metodoParametro")){
-            
-        }else{
-            
+        	metodoParametro();
+        	
         }
     }
-
-    private void maisVariaveis() {
-        if(this.tipo.contains(this.token.getValor())){ //Primeiro("VarV") == Tipo
-            varV();
-        }
-    }
-
-    private void metodoParametro() {
-        if(this.token.getValor().matches(identificador)){
-            this.token = proximo_token();
-            if(this.token.getValor().equals("(")){
-                this.token = proximo_token();
-                var();
-                if(this.token.getValor().equals(")")){
-                    maisVariavel();
-                }else{
-                    System.out.println("ERRO");
-                }
-            }else{
-                System.out.println("ERRO");
-            }
-        }else{
-            System.out.println("ERRO");
-        }
-    }
-
-    private void declaracaoVariaveis() {
-        if(this.token.getValor().equals("variaveis")){
-            this.token = proximo_token();
-            if(this.token.getValor().equals("{")){
-                this.token = proximo_token();
-                varV();
-                if(this.token.getValor().equals("}")){
-                    
-                }else{
-                    System.out.println("ERRO");
-                }
-            }else{
-                System.out.println("ERRO");
-            }
-        }else{
-            System.out.println("ERRO");
-        }
-    }
-
-    private void varV() {
-        if(this.tipo.contains(this.token.getValor())){
-            this.token = proximo_token();
-            complementoV();
-            maisVariaveis();
-        }else{
-            System.out.println("ERRO");
-        }
-    }
-
-    private void complementoV() {
-       if(this.token.getValor().matches(identificador)){
-           this.token = proximo_token();
-           vetor();
-           variavelMesmoTipo();
-       }
-    }
-
-    private void variavelMesmoTipo() {
-        switch (this.token.getValor()) {
-            case ",":
-                this.token = proximo_token();
-                complementoV();
-                break;
-            case ";":
-                this.token = proximo_token();
-                break;
-            default:
-                System.out.println("ERRO");
-                break;
-        }
-    }
-
+    
     private void maisVariavel() {
         if(this.token.getValor().equals(",")){
             this.token = proximo_token();
@@ -527,78 +532,622 @@ public class AnalisadorSintatico {
         }
     }
 
+   
+    private void metodoParametro() {
+    	
+        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            this.token = proximo_token();
+            
+            if(this.token.getValor().equals("(")){
+                this.token = proximo_token();
+                var();
+                
+                if(this.token.getValor().equals(")")){
+                    this.token = proximo_token();
+                    maisVariavel();
+                    
+                }else{
+                	System.out.println("ERRO: esta faltando o simbolo ) ");
+                    novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo ) ");
+                	this.recuperacaoDeErro();
+                }
+            }else{
+            	System.out.println("ERRO: esta faltando o simbolo ( ");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo ( ");
+            	this.recuperacaoDeErro();
+            }
+        }else{
+        	System.out.println("ERRO: esta faltando o identificador ");
+            novoErro(this.token.getLinha(),"ERRO: esta faltando o identificador ) ");
+        	this.recuperacaoDeErro();
+        }
+    }
+
+    private void declaracaoVariaveis() {
+    	
+        if(this.token.getValor().equals("variaveis")){
+            this.token = proximo_token();
+            
+            if(this.token.getValor().equals("{")){
+                this.token = proximo_token();
+                varV();
+                
+                if(this.token.getValor().equals("}")){
+                    this.token = proximo_token();
+                    
+                }else{
+                	System.out.println("ERRO: esta faltando o simbolo } ");
+                    novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo } ");
+                	this.recuperacaoDeErro();
+                }
+                
+            }else{
+            	System.out.println("ERRO: esta faltando o simbolo { ");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando o simbolo { ");
+            	this.recuperacaoDeErro();
+            }
+        }
+    }
+
+    private void varV() {
+    	
+        if(this.tipo.contains(this.token.getValor())){
+            this.token = proximo_token();
+            complementoV();
+            maisVariaveis();
+            
+        }else{
+        	System.out.println("ERRO: aguarda-se um tipo de variavel boleano/inteiro/real/texto");
+            novoErro(this.token.getLinha(),"ERRO: aguarda-se um tipo de variável boleano/inteiro/real/texto");
+        	this.recuperacaoDeErro();
+        }
+    }
+    
+	private void complementoV() {
+		
+       if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+           this.token = proximo_token();
+           vetor();
+           variavelMesmoTipo();
+           
+       }else {
+    	   
+    	   System.out.println("ERRO: faltou um identificador");
+           novoErro(this.token.getLinha(),"ERRO: faltou um identificador");
+       	   this.recuperacaoDeErro();
+    	   
+       }
+       
+    }
+
+    private void variavelMesmoTipo() {
+        if(this.token.getValor().equals(",")) {
+            this.token = proximo_token();
+            complementoV();
+            
+         } else if(this.token.getValor().equals(";")) {
+             this.token = proximo_token();
+
+         } else {
+        	 
+        	 System.out.println("ERRO: faltou , ou ;");
+             novoErro(this.token.getLinha(),"ERRO: faltou , ou ;");
+         	 this.recuperacaoDeErro();
+         }
+    }
+    
+    private void maisVariaveis() {
+    	
+        if(this.tipo.contains(this.token.getValor())){ //Primeiro("VarV") == Tipo
+            varV();
+        }
+    }
+
+
     private void comandos() {
         if(this.token.pertenceAoPrimeiroDe("leia")){
             leia();
+            
         }else if(this.token.pertenceAoPrimeiroDe("escreva")){
             escreva();
+            
         }else if(this.token.pertenceAoPrimeiroDe("se")){
             se();
+            
         }else if(this.token.pertenceAoPrimeiroDe("enquanto")){
             enquanto();
+            
         }else if(this.token.pertenceAoPrimeiroDe("atribuicaoVariavel")){
             atribuicaoVariavel();
+            
         }else if(this.token.pertenceAoPrimeiroDe("chamadaDeMetodo")){
             chamadaDeMetodo();
+            
             if(this.token.getValor().equals(";")){
                 this.token = proximo_token();
+                
             }else{
-                System.out.println("ERRO");
+            	 System.out.println("ERRO: faltou , ou ;");
+                 novoErro(this.token.getLinha(),"ERRO: faltou , ou ;");
+             	 this.recuperacaoDeErro();
             }
+            
         }else if(this.token.pertenceAoPrimeiroDe("incrementador")){
             incrementador();
+            
         }else if(this.token.getValor().equals("resultado")){
             this.token = proximo_token();
             retorno();
+            
             if(this.token.getValor().equals(";")){
                 this.token = proximo_token();
             }else{
-                System.out.println("ERRO");
+            	 System.out.println("ERRO: faltou , ou ;");
+                 novoErro(this.token.getLinha(),"ERRO: faltou , ou ;");
+             	 this.recuperacaoDeErro();
             }
         }
             
     }
 
     private void escreva() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    	
+    	if(this.token.getValor().equals("escreva")) {
+            this.token = proximo_token();
+            
+            if(this.token.getValor().equals("(")) {
+                this.token = proximo_token();
+                paramEscrita();
+                
+                if(this.token.getValor().equals(")")) {
+                    this.token = proximo_token();
+                    
+                    if(this.token.getValor().equals(";")) {
+                        this.token = proximo_token();
+
+                    } else {
+                    	 System.out.println("ERRO: faltou ;");
+                         novoErro(this.token.getLinha(),"ERRO: faltou ;");
+                     	 this.recuperacaoDeErro();
+                    }
+                    
+                } else {
+                	
+                	 System.out.println("ERRO: faltou )");
+                     novoErro(this.token.getLinha(),"ERRO: faltou )");
+                 	 this.recuperacaoDeErro();
+                }
+                
+            } else {
+            	 System.out.println("ERRO: faltou (");
+                 novoErro(this.token.getLinha(),"ERRO: faltou (");
+             	 this.recuperacaoDeErro();
+            }
+            
+    	} else {
+    		 System.out.println("ERRO: faltou a palavra 'escreva'");
+             novoErro(this.token.getLinha(),"ERRO: faltou a palavra 'escreva'");
+         	 this.recuperacaoDeErro();
+    	}
+        
     }
 
-    private void se() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    private void paramEscrita() {
+		if(this.token.pertenceAoPrimeiroDe("verificaCaso")) {
+			verificaCaso();
+			maisParametrosE();
+			
+		} else {
+			System.out.println("ERRO: sintaxe de parametro incorreta no comando escrita");
+            novoErro(this.token.getLinha(),"ERRO: sintaxe de parametro incorreta no comando escrita");
+        	this.recuperacaoDeErro();
+		}
+    	
+		
+	}
 
-    private void enquanto() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+	private void maisParametrosE() {
+		
+		if(this.token.getValor().equals(",")) {
+            this.token = proximo_token();
+            paramEscrita();
 
-    private void atribuicaoVariavel() {
-        if(this.token.getValor().matches(identificador)){
+		}
+		
+	}
+
+	private void se() {
+        
+		if(this.token.getValor().equals("se")) {
+            this.token = proximo_token();
+            condSe();
+            
+            if(this.token.getValor().equals("entao")) {
+                this.token = proximo_token();
+                
+                if(this.token.getValor().equals("{")) {
+                    this.token = proximo_token();
+                    blocoSe();
+                    
+                    if(this.token.getValor().equals("}")) {
+                        this.token = proximo_token();
+                        senao();
+                        
+                    } else {
+                    	System.out.println("ERRO: faltou o simbolo }");
+                        novoErro(this.token.getLinha(),"ERRO: faltou o simbolo }");
+                    	this.recuperacaoDeErro();
+                    }
+               } else {
+            	   System.out.println("ERRO: faltou o simbolo {");
+                   novoErro(this.token.getLinha(),"ERRO: faltou o simbolo {");
+               		this.recuperacaoDeErro();
+               }
+                
+	         } else {
+	        	 System.out.println("ERRO: faltou a palavra 'entao'");
+	             novoErro(this.token.getLinha(),"ERRO: faltou a palavra 'entao'");
+	         	 this.recuperacaoDeErro();
+	         }
+
+		}else {
+			System.out.println("ERRO: faltou a palavra 'se'");
+            novoErro(this.token.getLinha(),"ERRO: faltou a palavra 'se'");
+            this.recuperacaoDeErro();
+		}
+    }
+	
+	private void negar() {
+		 
+		if(this.token.getValor().equals("!")) {
+            this.token = proximo_token();
+		}
+	}
+	
+	private void maisCond() {
+		
+		if(this.token.getClasse().equals(Classe.OPERADOR_LOGICO)){
+            this.token = proximo_token();
+            cond();
+            maisCond();
+		}
+		
+	}
+
+	private void cond() {
+		
+		if(token.pertenceAoPrimeiroDe("termo")) {
+			termo();
+			
+			if(token.getClasse().equals(Classe.OPERADOR_RELACIONAL)) {
+	            this.token = proximo_token();
+				termo();
+				
+			} else {
+				System.out.println("ERRO: faltou operador relacional");
+	            novoErro(this.token.getLinha(),"ERRO: faltou operador relacional");
+	            this.recuperacaoDeErro();
+			}
+			
+		} else if(token.pertenceAoPrimeiroDe("negar")) {
+			negar();
+			
+			if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+	            this.token = proximo_token();
+	            vetor();
+	            
+			} else {
+				System.out.println("ERRO: faltou identificador");
+	            novoErro(this.token.getLinha(),"ERRO: faltou identificador");
+	            this.recuperacaoDeErro();
+
+			}
+			
+		} else {
+			System.out.println("ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
+            novoErro(this.token.getLinha(),"ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
+            this.recuperacaoDeErro();
+		}
+		
+	}
+
+	private void termo() {
+		
+		if(token.pertenceAoPrimeiroDe("tipoTermo")) {
+			tipoTermo();
+			op();
+			
+		} else {
+			System.out.println("ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
+            novoErro(this.token.getLinha(),"ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
+            this.recuperacaoDeErro();
+		}
+		
+	}
+
+	private void op() {
+			
+		if(this.token.getClasse().equals(Classe.OPERADOR_ARITMETICO)) {
+            this.token = proximo_token();
+            tipoTermo();
+            op();
+		}
+		
+	}
+
+	private void tipoTermo() {
+		
+		if(token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
             vetor();
+            
+		} else if(token.getClasse().equals(Classe.NUMERO)) {
+            this.token = proximo_token();
+            
+		}else if(token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)) {
+            this.token = proximo_token();
+			
+		}else if(token.getValor().equals("verdadeiro")) {
+            this.token = proximo_token();
+			
+		}else if(token.getValor().equals("false")) {
+            this.token = proximo_token();
+            
+		} else {
+			System.out.println("ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
+            novoErro(this.token.getLinha(),"ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
+            this.recuperacaoDeErro();
+		}
+	}
+
+	private void condSe() {
+		
+		if(token.getValor().equals("(")) {
+            this.token = proximo_token();
+            cond();
+            maisCond();
+            
+    		if(token.getValor().equals(")")) {
+                this.token = proximo_token();
+
+    		} else {
+    			System.out.println("ERRO: faltou o simbolo )");
+                novoErro(this.token.getLinha(),"ERRO: faltou o simbolo )");
+                this.recuperacaoDeErro();
+    		}
+
+
+		} else {
+			System.out.println("ERRO: faltou o simbolo (");
+            novoErro(this.token.getLinha(),"ERRO: faltou o simbolo (");
+            this.recuperacaoDeErro();
+		} 
+		
+		
+	}
+	
+    
+	private void blocoSe() {
+		
+		if(token.pertenceAoPrimeiroDe("comandos")) {
+			comandos();
+			blocoSe();
+		}
+		
+	}
+
+	private void senao() {
+		
+		if(token.getValor().equals("senao")) {
+            this.token = proximo_token();
+            condSenao();
+            
+            if(token.getValor().equals("{")) {
+                this.token = proximo_token();
+                blocoSe();
+                
+                if(token.getValor().equals("}")) {
+                    this.token = proximo_token();
+                    
+                } else {
+                	System.out.println("ERRO: faltou o simbolo }");
+                    novoErro(this.token.getLinha(),"ERRO: faltou o simbolo }");
+                    this.recuperacaoDeErro();
+                }
+                
+            } else {
+            	System.out.println("ERRO: faltou o simbolo {");
+                novoErro(this.token.getLinha(),"ERRO: faltou o simbolo {");
+                this.recuperacaoDeErro();
+            }
+
+            
+		} 
+		
+	}
+
+	
+	private void condSenao() {
+		
+		if(token.pertenceAoPrimeiroDe("conseSe")) {
+			condSe();
+			
+			if(token.getValor().equals("entao")) {
+	            this.token = proximo_token();
+
+			} else {
+				System.out.println("ERRO: faltou a palavra 'entao");
+                novoErro(this.token.getLinha(),"ERRO: faltou a palavra 'entao");
+                this.recuperacaoDeErro();
+			}
+			
+		}
+		
+	}
+
+	private void enquanto() {
+		if(token.getValor().equals("enquanto")) {
+            this.token = proximo_token();
+
+    		if(token.getValor().equals("(")) {
+                this.token = proximo_token();
+                operacaoRelacional();
+                
+        		if(token.getValor().equals(")")) {
+                    this.token = proximo_token();
+                    
+            		if(token.getValor().equals("{")) {
+                        this.token = proximo_token();
+                        conteudoLaco();
+                        
+                        if(token.getValor().equals("}")) {
+                            this.token = proximo_token();
+                            conteudoLeia();
+                            
+                		} else {
+                			System.out.println("ERRO: faltou o simbolo }");
+                            novoErro(this.token.getLinha(),"ERRO: faltou o simbolo }");
+                            this.recuperacaoDeErro();
+                		}
+                        
+            		} else {
+            			System.out.println("ERRO: faltou o simbolo {");
+                        novoErro(this.token.getLinha(),"ERRO: faltou o simbolo {");
+                        this.recuperacaoDeErro();
+            		}
+
+        		}  else {
+        			System.out.println("ERRO: faltou o simbolo )");
+                    novoErro(this.token.getLinha(),"ERRO: faltou o simbolo )");
+                    this.recuperacaoDeErro();
+        		}
+                   
+    		}  else {
+    			System.out.println("ERRO: faltou o simbolo (");
+                novoErro(this.token.getLinha(),"ERRO: faltou o simbolo (");
+                this.recuperacaoDeErro();
+    		}
+
+		}  else {
+			System.out.println("ERRO: faltou a palavra 'enquanto'");
+            novoErro(this.token.getLinha(),"ERRO: faltou a palavra 'enquanto'");
+            this.recuperacaoDeErro();
+		}
+    }
+	
+	
+
+    private void conteudoLaco() {
+    	
+		if(token.pertenceAoPrimeiroDe("comandos")) {
+			comandos();
+			conteudoLaco();
+		}
+		
+	}
+
+	private void operacaoRelacional() {
+		
+		if(token.pertenceAoPrimeiroDe("complementoOperador")) {
+			complementoOperador();
+			
+			if(token.getClasse().equals(Classe.OPERADOR_RELACIONAL)) {
+	            this.token = proximo_token();
+				complementoOperador();
+
+			}
+		} else if(token.pertenceAoPrimeiroDe("negar")) {
+			negar();
+			
+			if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+	            this.token = proximo_token();
+	            vetor();
+	            
+			} else {
+				System.out.println("ERRO: faltou identificador");
+	            novoErro(this.token.getLinha(),"ERRO: faltou identificador");
+	            this.recuperacaoDeErro();
+			}
+			
+		} else {
+			
+			System.out.println("ERRO: erro de sintaxe na condicao do enquanto");
+            novoErro(this.token.getLinha(),"ERRO: erro de sintaxe na condicao do enquanto");
+            this.recuperacaoDeErro();
+		}
+	}
+		
+
+
+	private void complementoOperador() {
+		
+		if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+            this.token = proximo_token();
+            vetor();
+            
+		} else if(token.getClasse().equals(Classe.NUMERO)) {
+            this.token = proximo_token();
+
+		} else if(token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)) {
+            this.token = proximo_token();
+
+		} else if(token.getValor().equals("verdadeiro")) {
+            this.token = proximo_token();
+
+		} else if(token.getValor().equals("falso")) {
+            this.token = proximo_token();
+
+		} else {
+			System.out.println("ERRO: erro de sintaxe na condicao do enquanto");
+            novoErro(this.token.getLinha(),"ERRO: erro de sintaxe na condicao do enquanto");
+            this.recuperacaoDeErro();
+		}
+
+		
+		
+	}
+
+	private void atribuicaoVariavel() {
+        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            this.token = proximo_token();
+            vetor();
+            
             if(this.token.getValor().equals("=")){
                 this.token = proximo_token();
                 verificaCaso();
+                
                 if(this.token.getValor().equals(";")){
                     this.token = proximo_token();
+                    
                 }else{
-                    System.out.println("ERRO");
+                	System.out.println("ERRO: faltou o simbolo ;");
+                    novoErro(this.token.getLinha(),"ERRO: faltou o simbolo ;");
+                    this.recuperacaoDeErro();
                 }
             }else{
-                System.out.println("ERRO");
+            	System.out.println("ERRO: faltou o simbolo =");
+                novoErro(this.token.getLinha(),"ERRO: faltou o simbolo =");
+                this.recuperacaoDeErro();
             }
+            
         }else{
-            System.out.println("ERRO");
+        	System.out.println("ERRO: faltou identificador");
+            novoErro(this.token.getLinha(),"ERRO: faltou identificador");
+            this.recuperacaoDeErro();
         }
     }
 
     private void incrementador() {
-        if(this.token.getValor().matches(identificador)){
+        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
             vetor();
-            if(isIncrementador(this.token.getValor())){ //pra checar se é ++ ou --
+            
+            if(isIncrementador(this.token.getValor())){ //pra checar se Ã© ++ ou --
                 this.token = proximo_token();
+                
                 if(this.token.getValor().equals(";")){
                     this.token = proximo_token();
+                    
                 }else{
                     System.out.println("ERRO");
                 }
@@ -609,23 +1158,27 @@ public class AnalisadorSintatico {
     }
 
     private void retorno() {
+    	
         if(this.token.pertenceAoPrimeiroDe("verificaCaso")){
             verificaCaso();
         }
     }
 
     private void verificaCaso() {
+    	
         if(this.token.pertenceAoPrimeiroDe("incremento")){
             incremento();
-            this.token = proximo_token();
+            
         }else if(this.token.pertenceAoPrimeiroDe("expressao")){
             expressao();
-            this.token = proximo_token();
+            
         }else if(this.token.pertenceAoPrimeiroDe("booleano")){
             booleano();
-            this.token = proximo_token();
+            
         }else{
-            System.out.println("ERRO");
+        	System.out.println("ERRO: erro de sintaxe");
+            novoErro(this.token.getLinha(),"ERRO: erro de sintaxe");
+            this.recuperacaoDeErro();
         }
         
     }
@@ -652,7 +1205,7 @@ public class AnalisadorSintatico {
             this.token = proximo_token();
             if(isIncrementador(this.token.getValor())){
                 this.token = proximo_token();
-                if(this.token.getValor().matches(identificador)){
+                if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
                     this.token = proximo_token();
                     vetor();
                     if(this.token.getValor().equals(")")){
@@ -663,7 +1216,7 @@ public class AnalisadorSintatico {
                 }else{
                     System.out.println("ERRO");
                 }
-            }else if(this.token.getValor().matches(identificador)){
+            }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
                 this.token = proximo_token();
                 vetor();
                 if(isIncrementador(this.token.getValor())){
@@ -679,13 +1232,13 @@ public class AnalisadorSintatico {
             }
         }else if(isIncrementador(this.token.getValor())){
             this.token = proximo_token();
-            if(this.token.getValor().matches(identificador)){
+            if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
                 this.token = proximo_token();
                 vetor();
             }else{
                 System.out.println("ERRO");
             }
-        }else if(this.token.getValor().matches(identificador)){
+        }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
             vetor();
             if(isIncrementador(this.token.getValor())){
@@ -726,13 +1279,21 @@ public class AnalisadorSintatico {
     }
 
     private void operador() {
-        if( this.token.getValor().matches(digito) | this.token.getValor().matches(cadeiaCaracteres)){
+    	
+        if( this.token.getClasse().equals(Classe.NUMERO) | this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)){
             this.token = proximo_token();    
-        }else if(this.token.getValor().matches(identificador)){
+            
+        }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token =proximo_token();
             vetor();
+            
         }else if(this.token.pertenceAoPrimeiroDe("chamadaDeMetodo")){
             chamadaDeMetodo();
+        
+        } else {
+        	System.out.println("ERRO: operador invalido");
+            novoErro(this.token.getLinha(),"ERRO: operador invalido");
+            this.recuperacaoDeErro();
         }
     
     }
@@ -747,5 +1308,8 @@ public class AnalisadorSintatico {
             }
         }
     }
+    
+    
+
     
 }

@@ -6,8 +6,8 @@
 package view;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import util.Classe;
+import util.ErroSintatico;
 import util.Token;
 
 /**
@@ -1149,10 +1149,16 @@ public class AnalisadorSintatico {
                     this.token = proximo_token();
                     
                 }else{
-                    System.out.println("ERRO");
+                    String s = "Erro de Sintaxe: falta o ;";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
                 }
             }else{
-                System.out.println("ERRO");
+                String s = "Erro de Sintaxe: deveria ser ++ ou -- ;";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
             }
         }
     }
@@ -1198,86 +1204,181 @@ public class AnalisadorSintatico {
                 return s.equals("+") | s.equals("-") | s.equals("*") | s.equals("/");
     }
 
-    
-    
-    private void incremento() {
+   
+
+    private void incremento(){
         if(this.token.getValor().equals("(")){
             this.token = proximo_token();
-            if(isIncrementador(this.token.getValor())){
-                this.token = proximo_token();
-                if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-                    this.token = proximo_token();
-                    vetor();
-                    if(this.token.getValor().equals(")")){
-                        this.token = proximo_token();
-                    }else{
-                        System.out.println("ERRO");
-                    }
-                }else{
-                    System.out.println("ERRO");
-                }
-            }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-                this.token = proximo_token();
-                vetor();
-                if(isIncrementador(this.token.getValor())){
-                    this.token = proximo_token();
-                    if(this.token.getValor().equals(")")){
-                        this.token = proximo_token();
-                    }else{
-                        System.out.println("ERRO");
-                    }
-                }else{
-                    System.out.println("ERRO");
-                }
-            }
+            auxiliarA();                
+        
         }else if(isIncrementador(this.token.getValor())){
             this.token = proximo_token();
             if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
                 this.token = proximo_token();
                 vetor();
             }else{
-                System.out.println("ERRO");
+                String s = "Erro de Sintaxe: falta o identificador";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
             }
         }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
             vetor();
             if(isIncrementador(this.token.getValor())){
-               this.token = proximo_token(); 
+                this.token = proximo_token();
             }else{
-                System.out.println("ERRO");
+                String s = "Erro de Sintaxe: falta ++ ou --";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
             }
         }else{
-            System.out.println("ERRO");
+            String s = "Erro de Sintaxe";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
         }
     }
-
+    
+    
+    private void auxiliarA() {
+        if(isIncrementador(this.token.getValor())){
+            this.token = proximo_token();
+            if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+                this.token = proximo_token();
+                vetor();
+                if(this.token.getValor().equals(")")){
+                    this.token = proximo_token();
+                }else{
+                    String s = "Erro Sintático: falta o )";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+                }
+            }else{
+                String s = "Erro Sintático: falta o identificador";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+            }
+        }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            this.token = proximo_token();
+            vetor();
+            if(isIncrementador(this.token.getValor())){
+                this.token = proximo_token();
+                if(this.token.getValor().equals(")")){
+                    this.token = proximo_token();
+                }else{
+                    String s = "Erro Sintático: falta o )";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+                }
+            }else{
+                String s = "Erro Sintático: deveria ser ++ ou --";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+            }
+        }else{
+            String s = "Erro de Sintaxe";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+        }
+    }
+    
     private void expressao() {
         if(this.token.getValor().equals("(")){
             this.token = proximo_token();
             expressao();
             if(this.token.getValor().equals(")")){
                 this.token = proximo_token();
-                if(isOperadorAritmetico(this.token.getValor())){
-                    this.token = proximo_token();
-                    expressao();
-                }else{
-                    return;
-                }
+                auxiliarD();
             }else{
-                System.out.println("ERRO");
+                String s = "Erro Sintático: falta o )";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
             }
         }else if(this.token.pertenceAoPrimeiroDe("operador")){
             operador();
             maisOperacoes();
         }else{
-            System.out.println("ERRO");
+            String s = "Erro Sintático";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
         }
     }
 
+    private void auxiliarD() {
+        if(this.token.getClasse().equals(Classe.OPERADOR_ARITMETICO)){
+            this.token = proximo_token();
+            expressao();
+        }else{
+            return;
+        }
+    }
+    
     private void booleano() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(this.token.getValor().equals("verdadeiro") | this.token.getValor().equals("falso")){
+            this.token = proximo_token();
+        }else if(this.token.getValor().equals("(")){
+            this.token = proximo_token();
+            auxiliarB();
+        }else if(this.token.getValor().equals("!")){
+            this.token = proximo_token();
+            auxiliarC();
+        }else{
+            String s = "Erro de Sintaxe";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+        }
     }
 
+    private void auxiliarB() {
+        if(this.token.getValor().equals("verdadeiro") | this.token.getValor().equals("falso")){
+            this.token = proximo_token();
+            if(this.token.getValor().equals(")")){
+                this.token = proximo_token();
+            }else{
+                    String s = "Erro Sintático: falta o )";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+            }
+        }else if(this.token.getValor().equals("!")){
+            this.token=proximo_token();
+            auxiliarC();
+            if(this.token.getValor().equals(")")){
+                this.token = proximo_token();
+            }else{
+                String s = "Erro Sintático: falta o )";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+            }
+        }
+    }
+        
+    private void auxiliarC() {
+        if(this.token.getValor().equals("verdadeiro") | this.token.getValor().equals("falso")){
+            this.token = proximo_token();
+        }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            this.token = proximo_token();
+            vetor();
+        }else{
+            String s = "Erro de Sintaxe";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
+        }
+    
+    }
+    
     private void operador() {
     	
         if( this.token.getClasse().equals(Classe.NUMERO) | this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)){
@@ -1299,17 +1400,26 @@ public class AnalisadorSintatico {
     }
 
     private void maisOperacoes() {
-        if(isOperadorAritmetico(this.token.getValor())){
+        if(this.token.getClasse().equals(Classe.OPERADOR_ARITMETICO)){
             this.token = proximo_token();
-            if(this.token.pertenceAoPrimeiroDe("maisOperacoes")){
+            auxiliarE();
+        }else{
+            return;
+        }
+    }
+
+    private void auxiliarE(){
+        if(this.token.pertenceAoPrimeiroDe("maisOperacoes")){
                 maisOperacoes();
-            }else if(this.token.pertenceAoPrimeiroDe("expressao")){
+        }else if(this.token.pertenceAoPrimeiroDe("expressao")){
                 expressao();
-            }
+        }else{
+            String s = "Erro de Sintaxe";
+                    System.out.println(s);
+                    novoErro(this.token.getLinha(),s);
+                    this.recuperacaoDeErro();
         }
     }
     
-    
-
-    
+ 
 }

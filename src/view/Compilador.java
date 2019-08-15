@@ -32,7 +32,7 @@ public class Compilador {
     		      
 	    		      //executa o analisador sintÃ¡tico
 	    		      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
-	    		      as.executar(); 
+	    		      as.executar(arquivos[i].getPath()); 
     		      } else {
     		    	  System.out.println("\nErro léxico no arquivo: " + arquivos[i].getPath() + "\n");
     		      }

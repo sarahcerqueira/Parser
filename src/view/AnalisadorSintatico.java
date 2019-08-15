@@ -5,9 +5,14 @@
  */
 package view;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import util.Classe;
 import util.ErroSintatico;
+import util.ManipuladorDeArquivo;
+import util.Modo;
+import util.ModoException;
 import util.Token;
 
 /**
@@ -55,7 +60,7 @@ public class AnalisadorSintatico {
     	
     }
 
-    public void executar() {
+    public void executar(String arquivo) {
         //estaPresenteNaListaDeTokens(":");
         this.token = proximo_token();
 
@@ -66,6 +71,8 @@ public class AnalisadorSintatico {
         } else {
             System.out.println("ERRO: codigo encerrado sem atingir o $");
         }
+        
+        escreveSaida(arquivo);
 
     }
 
@@ -1542,6 +1549,52 @@ public class AnalisadorSintatico {
         return false;
         
     }
+    
+    private void escreveSaida(String arquivo) {
+		
+		arquivo = arquivo.substring(0,  arquivo.indexOf("."));
+		        
+		ManipuladorDeArquivo escrita;
+		try {
+		            
+		            escrita = new ManipuladorDeArquivo(arquivo + ".saida2", Modo.ESCRITA);
+		
+		            if(this.erros.isEmpty() && this.listaDeTokens.isEmpty()){
+		                System.out.println("\nLista de Erros Sintáticos\n");
+		                                escrita.escreverArquivo("\r\nLista de Erros Sintáticos\r\n");
+		                        
+		                        String s = "SUCESSO: NENHUM ERRO FOI ENCONTRADO!";
+		
+		                        System.out.println(s);
+		                        escrita.escreverArquivo(s);
+		            }else{   
+		                for (int i = 0; i < this.erros.size(); i++) {
+		                        if (i == 0) {
+		                                System.out.println("\nErros Sintáticos\n");
+		                                escrita.escreverArquivo("\r\nErros Sintáticos\r\n");
+		                        }
+		                        ErroSintatico e = this.erros.get(i);
+		
+		                        System.out.println(e.getLinha() + " - " + e.getErro());
+		                        escrita.escreverArquivo(e.getLinha() + " - " + e.getErro());
+		                }
+		            }
+		
+		escrita.fechaArquivo();
+		
+		        
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ModoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		}
 
 
     

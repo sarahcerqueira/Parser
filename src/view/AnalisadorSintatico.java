@@ -17,7 +17,7 @@ import util.Token;
 public class AnalisadorSintatico {
 
     private ArrayList<Token> listaDeTokens;
-    private ArrayList<String> tipo = new ArrayList();
+    private ArrayList<String> tipo = new ArrayList<String>();
     private ArrayList<ErroSintatico> erros;
     private Token token;
    
@@ -26,7 +26,7 @@ public class AnalisadorSintatico {
         this.listaDeTokens = listaDeTokens;
         this.listaDeTokens.add(listaDeTokens.size(), new Token("$", Classe.FINALIZADOR, 0)); //add o '$' no final da lista
         this.setup();
-        erros = new ArrayList();
+        erros = new ArrayList<ErroSintatico>();
     }
 
     public void setup() {
@@ -40,19 +40,6 @@ public class AnalisadorSintatico {
         //Identificadores
     }
 
-    //fiz esse metodo sÃ³ pra testar se tem algo na lista mesmo.
-    private void estaPresenteNaListaDeTokens(String s) {
-
-        for (Token t : this.listaDeTokens) {
-            if (t.getValor().equals(s)) {
-                System.out.println("Sim");
-            }
-        }
-
-        System.out.println("NÃ£o");
-    }
-    
-    
     private void novoErro(int linha, String erro) {
     	this.erros.add(new ErroSintatico(linha, erro));
     }
@@ -129,7 +116,7 @@ public class AnalisadorSintatico {
     }
     
     private void escopoPrograma() {
-        if (this.token.pertenceAoPrimeiroDe("metodo")) {
+        if (pertenceAoPrimeiroDe("metodo")) {
             metodo();//token = "metodo"
             escopoPrograma();
             
@@ -225,7 +212,7 @@ public class AnalisadorSintatico {
     }
 
     private void multiConst() {
-        if (this.token.pertenceAoPrimeiroDe("multiplasConstantes")) {
+        if (pertenceAoPrimeiroDe("multiplasConstantes")) {
             multiplasConstantes();
             
         }else {
@@ -478,7 +465,7 @@ public class AnalisadorSintatico {
     }
 
     private void escopoMetodo() {
-        if(this.token.pertenceAoPrimeiroDe("comandos")){
+        if(pertenceAoPrimeiroDe("comandos")){
             comandos();
             escopoMetodo();
         }
@@ -519,7 +506,7 @@ public class AnalisadorSintatico {
             vetor();
             maisVariavel();
             
-        }else if(this.token.pertenceAoPrimeiroDe("metodoParametro")){
+        }else if(pertenceAoPrimeiroDe("metodoParametro")){
         	metodoParametro();
         	
         }
@@ -645,22 +632,22 @@ public class AnalisadorSintatico {
 
 
     private void comandos() {
-        if(this.token.pertenceAoPrimeiroDe("leia")){
+        if(pertenceAoPrimeiroDe("leia")){
             leia();
             
-        }else if(this.token.pertenceAoPrimeiroDe("escreva")){
+        }else if(pertenceAoPrimeiroDe("escreva")){
             escreva();
             
-        }else if(this.token.pertenceAoPrimeiroDe("se")){
+        }else if(pertenceAoPrimeiroDe("se")){
             se();
             
-        }else if(this.token.pertenceAoPrimeiroDe("enquanto")){
+        }else if(pertenceAoPrimeiroDe("enquanto")){
             enquanto();
             
-        }else if(this.token.pertenceAoPrimeiroDe("atribuicaoVariavel")){
+        }else if(pertenceAoPrimeiroDe("atribuicaoVariavel")){
             atribuicaoVariavel();
             
-        }else if(this.token.pertenceAoPrimeiroDe("chamadaDeMetodo")){
+        }else if(pertenceAoPrimeiroDe("chamadaDeMetodo")){
             chamadaDeMetodo();
             
             if(this.token.getValor().equals(";")){
@@ -672,7 +659,7 @@ public class AnalisadorSintatico {
              	 this.recuperacaoDeErro();
             }
             
-        }else if(this.token.pertenceAoPrimeiroDe("incrementador")){
+        }else if(pertenceAoPrimeiroDe("incrementador")){
             incrementador();
             
         }else if(this.token.getValor().equals("resultado")){
@@ -733,7 +720,7 @@ public class AnalisadorSintatico {
     }
 
     private void paramEscrita() {
-		if(this.token.pertenceAoPrimeiroDe("verificaCaso")) {
+		if(pertenceAoPrimeiroDe("verificaCaso")) {
 			verificaCaso();
 			maisParametrosE();
 			
@@ -816,7 +803,7 @@ public class AnalisadorSintatico {
 
 	private void cond() {
 		
-		if(token.pertenceAoPrimeiroDe("termo")) {
+		if(pertenceAoPrimeiroDe("termo")) {
 			termo();
 			
 			if(token.getClasse().equals(Classe.OPERADOR_RELACIONAL)) {
@@ -829,7 +816,7 @@ public class AnalisadorSintatico {
 	            this.recuperacaoDeErro();
 			}
 			
-		} else if(token.pertenceAoPrimeiroDe("negar")) {
+		} else if(pertenceAoPrimeiroDe("negar")) {
 			negar();
 			
 			if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
@@ -853,7 +840,7 @@ public class AnalisadorSintatico {
 
 	private void termo() {
 		
-		if(token.pertenceAoPrimeiroDe("tipoTermo")) {
+		if(pertenceAoPrimeiroDe("tipoTermo")) {
 			tipoTermo();
 			op();
 			
@@ -929,7 +916,7 @@ public class AnalisadorSintatico {
     
 	private void blocoSe() {
 		
-		if(token.pertenceAoPrimeiroDe("comandos")) {
+		if(pertenceAoPrimeiroDe("comandos")) {
 			comandos();
 			blocoSe();
 		}
@@ -969,7 +956,7 @@ public class AnalisadorSintatico {
 	
 	private void condSenao() {
 		
-		if(token.pertenceAoPrimeiroDe("conseSe")) {
+		if(pertenceAoPrimeiroDe("conseSe")) {
 			condSe();
 			
 			if(token.getValor().equals("entao")) {
@@ -1039,7 +1026,7 @@ public class AnalisadorSintatico {
 
     private void conteudoLaco() {
     	
-		if(token.pertenceAoPrimeiroDe("comandos")) {
+		if(pertenceAoPrimeiroDe("comandos")) {
 			comandos();
 			conteudoLaco();
 		}
@@ -1048,7 +1035,7 @@ public class AnalisadorSintatico {
 
 	private void operacaoRelacional() {
 		
-		if(token.pertenceAoPrimeiroDe("complementoOperador")) {
+		if(pertenceAoPrimeiroDe("complementoOperador")) {
 			complementoOperador();
 			
 			if(token.getClasse().equals(Classe.OPERADOR_RELACIONAL)) {
@@ -1056,7 +1043,7 @@ public class AnalisadorSintatico {
 				complementoOperador();
 
 			}
-		} else if(token.pertenceAoPrimeiroDe("negar")) {
+		} else if(pertenceAoPrimeiroDe("negar")) {
 			negar();
 			
 			if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
@@ -1165,20 +1152,20 @@ public class AnalisadorSintatico {
 
     private void retorno() {
     	
-        if(this.token.pertenceAoPrimeiroDe("verificaCaso")){
+        if(pertenceAoPrimeiroDe("verificaCaso")){
             verificaCaso();
         }
     }
 
     private void verificaCaso() {
     	
-        if(this.token.pertenceAoPrimeiroDe("incremento")){
+        if(pertenceAoPrimeiroDe("incremento")){
             incremento();
             
-        }else if(this.token.pertenceAoPrimeiroDe("expressao")){
+        }else if(pertenceAoPrimeiroDe("expressao")){
             expressao();
             
-        }else if(this.token.pertenceAoPrimeiroDe("booleano")){
+        }else if(pertenceAoPrimeiroDe("booleano")){
             booleano();
             
         }else{
@@ -1200,12 +1187,6 @@ public class AnalisadorSintatico {
         return false;
     }
      
-    private boolean isOperadorAritmetico(String s){
-                return s.equals("+") | s.equals("-") | s.equals("*") | s.equals("/");
-    }
-
-   
-
     private void incremento(){
         if(this.token.getValor().equals("(")){
             this.token = proximo_token();
@@ -1291,10 +1272,10 @@ public class AnalisadorSintatico {
     
     private void expressao() {
         
-    	if(this.token.pertenceAoPrimeiroDe("expressao")) {
+    	if(pertenceAoPrimeiroDe("expressao")) {
     		expressao();
     		auxiliarE();
-    	} else if(this.token.pertenceAoPrimeiroDe("multExp")) {
+    	} else if(pertenceAoPrimeiroDe("multExp")) {
     		multExp();
     		
     	} else {
@@ -1324,10 +1305,10 @@ public class AnalisadorSintatico {
 	
 	private void multExp() {
 		
-		if(this.token.pertenceAoPrimeiroDe("multExp")) {
+		if(pertenceAoPrimeiroDe("multExp")) {
 			multExp();
     		auxiliarD();
-    	} else if(this.token.pertenceAoPrimeiroDe("negatiExp")) {
+    	} else if(pertenceAoPrimeiroDe("negatiExp")) {
     		negatiExp();
     		
     	} else {
@@ -1343,7 +1324,7 @@ public class AnalisadorSintatico {
             this.token = proximo_token();
             operador();
             
-		} else if (this.token.pertenceAoPrimeiroDe("operador")) {
+		} else if (pertenceAoPrimeiroDe("operador")) {
 			operador();
 			
 		} else {
@@ -1438,7 +1419,7 @@ public class AnalisadorSintatico {
             this.token =proximo_token();
             vetor();
             
-        }else if(this.token.pertenceAoPrimeiroDe("chamadaDeMetodo")){
+        }else if(pertenceAoPrimeiroDe("chamadaDeMetodo")){
             chamadaDeMetodo();
         
         } else if(this.token.getValor().equals("(")) {
@@ -1462,6 +1443,104 @@ public class AnalisadorSintatico {
             this.recuperacaoDeErro();
         }
     
+    }
+    
+    private boolean pertenceAoPrimeiroDe(String naoTerminal){
+        
+        switch (naoTerminal) {
+        
+           case "metodo":
+                return token.getValor().equals("metodo");
+                
+            case "multiplasConstantes":    
+                return token.getValor().equals(",");
+                
+            case "comandos":    
+                return token.getValor().equals("resultado") | token.getValor().equals("leia") | token.getValor().equals("escreva")
+                		| token.getValor().equals("se") | token.getValor().equals("enquanto") | token.getClasse().equals(Classe.IDENTIFICADOR)  ;
+            
+            case "metodoParametro":    
+                return token.getClasse().equals(Classe.IDENTIFICADOR);
+                
+            case "leia":    
+                return token.getValor().equals("leia");
+                
+            case "escreva":    
+                return token.getValor().equals("escreva");
+                
+            case "se":    
+                return token.getValor().equals("se");
+                
+            case "enquanto":    
+                return token.getValor().equals("enquanto");
+                
+            case "atribuicaoVariavel":    
+                return token.getClasse().equals(Classe.IDENTIFICADOR);
+                
+            case "chamadaDeMetodo":    
+                return token.getClasse().equals(Classe.IDENTIFICADOR);
+                
+            case "incrementador":    
+                return token.getClasse().equals(Classe.IDENTIFICADOR);
+                
+            case "verificaCaso":    
+                return  token.getValor().equals("(") | token.getValor().equals("!")| token.getValor().equals("verdadeiro")| token.getValor().equals("falso")
+                		| token.getClasse().equals(Classe.IDENTIFICADOR)| token.getClasse().equals(Classe.NUMERO)
+                		| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)| token.getClasse().equals(Classe.OPERADOR_ARITMETICO);
+                
+            case "termo":    
+                return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("verdadeiro")
+                		| token.getValor().equals("falso");
+                
+            case "negar":    
+                return true; //aceita vazio
+                
+            case "tipoTermo":    
+                return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("verdadeiro")
+                		| token.getValor().equals("falso");
+                
+            case "conseSe":    
+                return token.getValor().equals("(");
+                
+            case "complementoOperador":    
+                return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("verdadeiro")
+                		| token.getValor().equals("falso");
+                
+            case "incremento":    
+                return token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("(")
+                		| token.getValor().equals("++") | token.getValor().equals("--");
+                
+            case "expressao":    
+                return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("+")
+                		| token.getValor().equals("-")| token.getValor().equals("(")| token.getValor().equals("*")
+                		| token.getValor().equals("/");
+                
+            case "booleano":    
+                return  token.getValor().equals("verdadeiro")| token.getValor().equals("falso")
+                		| token.getValor().equals("(")| token.getValor().equals("!");
+                
+            case "multExp":    
+            	return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("*")
+                		| token.getValor().equals("(")| token.getValor().equals("-")| token.getValor().equals("/");
+            	
+            case "negatiExp":    
+            	return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("(")
+                		| token.getValor().equals("-");
+            	
+            case "operador":    
+            	return token.getClasse().equals(Classe.NUMERO)| token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+                		| token.getClasse().equals(Classe.IDENTIFICADOR) | token.getValor().equals("(");
+                		
+        }
+    
+        return false;
+        
     }
 
 

@@ -5,6 +5,15 @@ programa{
 		texto s = "oi";
 	}
 
+	metodo principal(): vazio{
+		
+		a = ((x+2) * 4)/b;
+		b = "eu";
+		b++;
+		b= b--;
+	
+	}
+
 	metodo soma(inteiro x, inteiro y): inteiro{
 		
 

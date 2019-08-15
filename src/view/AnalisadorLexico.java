@@ -51,7 +51,7 @@ public class AnalisadorLexico {
 			if(Character.toString(atual).matches("[a-zA-Z]")){
 				identificador();
 				
-			} else if (Character.toString(atual).matches("[0-9]")) {
+			} else if (Character.toString(atual).matches("[0-9]") | (atual == '-' && Character.toString(prox).matches("[0-9]"))) {
 				numero();
 			
 			}else if( atual == '+' | atual == '-' | atual =='*' | atual =='/') {

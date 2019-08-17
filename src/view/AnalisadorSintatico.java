@@ -66,7 +66,7 @@ public class AnalisadorSintatico {
         programa();
 
         if (this.token.getValor().equals("$")) {
-            System.out.println("SUCESSO: codigo encerrado com o caractere finalizador $");
+            System.out.println("RESULTADO: codigo encerrado com o caractere finalizador $");
         } else {
             System.out.println("ERRO: codigo encerrado sem atingir o $");
         }
@@ -614,7 +614,7 @@ public class AnalisadorSintatico {
         }
     }
     
-	private void complementoV() {
+    private void complementoV() {
 		
        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
            this.token = proximo_token();
@@ -708,6 +708,7 @@ public class AnalisadorSintatico {
             if(this.token.getValor().equals(";")){
                 this.token = proximo_token();
             }else{
+                 System.out.println(this.token.getValor());
             	 System.out.println("ERRO: faltou , ou ;");
                  novoErro(this.token.getLinha(),"ERRO: faltou , ou ;");
              	 this.recuperacaoDeErro();
@@ -841,8 +842,8 @@ public class AnalisadorSintatico {
 	}
 
 	private void cond() {
-		if (this.token.getClasse().getClasse().equals(Classe.IDENTIFICADOR)){
-                   if (ver_token().getClasse().getClasse().equals(Classe.OPERADOR_LOGICO) ||
+		if (this.token.getClasse().getClasse().equals(Classe.IDENTIFICADOR.getClasse())){
+                   if (ver_token().getClasse().getClasse().equals(Classe.OPERADOR_LOGICO.getClasse()) ||
                        ver_token().getValor().equals(")")){
                        negar();
                        this.token = proximo_token();

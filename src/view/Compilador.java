@@ -19,30 +19,37 @@ public class Compilador {
     	File[] arquivos = file.listFiles();
     	
     	int i =0;
-    	
-    	while (i< arquivos.length) {
-    		
-    		if(arquivos[i].getName().endsWith(".txt"))
-    		{       			
-    			//executa o analisador lexico e obtem a lista de tokens
-    		      AnalisadorLexico al = new AnalisadorLexico();
-    		      listaDeTokens = al.executar(arquivos[i].getPath());
-    		      
-    		      if(al.getErro().isEmpty()) {
-    		      
-	    		      //executa o analisador sintático
-	    		      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
-	    		      as.executar(arquivos[i].getPath()); 
-    		      } else {
-    		    	  System.out.println("\nErro lexico no arquivo: " + arquivos[i].getPath() + "\n");
-    		      }
-    		}
-    		
-    		i++;
-    	}
+    
+        
+        if(arquivos.length == 0){
+            System.out.println("NAO TEM ARQUIVOS NA PASTA TESTE");
+        }else{
+        
+                while (i< arquivos.length) {
+
+                        if(arquivos[i].getName().endsWith(".txt"))
+                        {       			
+                                //executa o analisador lexico e obtem a lista de tokens
+                              AnalisadorLexico al = new AnalisadorLexico();
+                              listaDeTokens = al.executar(arquivos[i].getPath());
+
+                              if(al.getErro().isEmpty()) {
+
+                                      //executa o analisador sintático
+                                      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
+                                      as.executar(arquivos[i].getPath()); 
+                              } else {
+                                  System.out.println("\nErro lexico no arquivo: " + arquivos[i].getPath() + "\n");
+                              }
+                        }
+
+                        i++;
+                }
 
       
-   }
+        }
+    
+    }
    
 	
 }

@@ -34,7 +34,7 @@ public class Compilador {
 	    		      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
 	    		      as.executar(arquivos[i].getPath()); 
     		      } else {
-    		    	  System.out.println("\nErro léxico no arquivo: " + arquivos[i].getPath() + "\n");
+    		    	  System.out.println("\nErro lexico no arquivo: " + arquivos[i].getPath() + "\n");
     		      }
     		}
     		

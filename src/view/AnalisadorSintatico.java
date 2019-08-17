@@ -25,8 +25,7 @@ public class AnalisadorSintatico {
     private ArrayList<String> tipo = new ArrayList<String>();
     private ArrayList<ErroSintatico> erros;
     private Token token;
-   
-
+    
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens) {
         this.listaDeTokens = listaDeTokens;
         this.listaDeTokens.add(listaDeTokens.size(), new Token("$", Classe.FINALIZADOR, 0)); //add o '$' no final da lista
@@ -77,11 +76,29 @@ public class AnalisadorSintatico {
     }
 
     public Token proximo_token() {
-        Token t = listaDeTokens.remove(0);
+        
+        Token t = new Token("Â¬", Classe.NULL, 0);
+        
+        if(!listaDeTokens.isEmpty()){
+            t = listaDeTokens.remove(0);
+        }
+        
         System.out.println("Token em analise: " + t.getValor());
+        
         return t;
     }
-
+    
+    public Token ver_token(){ //ve o proximo token
+        
+        Token t = new Token("Â¬Â¬", Classe.NULL, 0);
+        
+        if(!listaDeTokens.isEmpty()){
+            t = listaDeTokens.get(0);
+        }
+        
+        return t;
+    }
+    
     private void programa() {
 
         if (this.token.getValor().equals("programa")) {
@@ -300,7 +317,7 @@ public class AnalisadorSintatico {
     }
 
     private void opIndice() {
-        if (this.token.getClasse().equals(Classe.OPERADOR_ARITMETICO.getClasse())) {
+        if (this.token.getClasse().equals(Classe.OPERADOR_ARITMETICO)) {
             this.token = proximo_token();
             opI2();
             opIndice();
@@ -479,8 +496,8 @@ public class AnalisadorSintatico {
     }
 
     private void chamadaDeMetodo() {
-        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-            this.token = proximo_token();
+        /*if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            this.token = proximo_token();*/
             
             if(this.token.getValor().equals("(")){
                 this.token = proximo_token();
@@ -499,11 +516,11 @@ public class AnalisadorSintatico {
                 novoErro(this.token.getLinha(),"ERRO: faltou (");
             	this.recuperacaoDeErro();
             }
-        }else{
+        /*}else{
             System.out.println("ERRO: falta identificador");
             novoErro(this.token.getLinha(),"ERRO: falta identificador");
         	this.recuperacaoDeErro();
-        }
+        }*/
     }
 
     private void var() {
@@ -651,25 +668,40 @@ public class AnalisadorSintatico {
         }else if(pertenceAoPrimeiroDe("enquanto")){
             enquanto();
             
-        }else if(pertenceAoPrimeiroDe("atribuicaoVariavel")){
-            atribuicaoVariavel();
-            
-        }else if(pertenceAoPrimeiroDe("chamadaDeMetodo")){
-            chamadaDeMetodo();
-            
-            if(this.token.getValor().equals(";")){
-                this.token = proximo_token();
-                
+        }else if(this.token.getClasse().getClasse().equals(Classe.IDENTIFICADOR.getClasse())){
+            /*&& this.nextToken.getValor().equals("[")){
+            pra resolver a ambiguidade entre <comandos> = <atribuicaoVariavel> | <incrementador>
+            Token proximoDoProximo = this.listaDeTokens.get(1);
+            if(this)
+            if(proximoDoProximo == null){
+                 System.out.println("Erro de Sintaxe: atribuiÃ§Ã£o incompleta");
+                 novoErro(token.getLinha(),"Erro de Sintaxe: atribuiÃ§Ã£o incompleta");
+         	 this.recuperacaoDeErro();
             }else{
-            	 System.out.println("ERRO: faltou , ou ;");
-                 novoErro(this.token.getLinha(),"ERRO: faltou , ou ;");
-             	 this.recuperacaoDeErro();
+                if(proximoDoProximo.getValor().equals("=")){
+                    atribuicaoVariavel();
+                }else if(isIncrementador(proximoDoProximo.getValor())){
+                    incrementador();
+                }
+            }*/
+            
+            this.token = proximo_token();
+            
+            if(this.token.getValor().equals("(")){
+                chamadaDeMetodo();
+            }else{
+                vetor();
+                if(this.token.getValor().equals("=")){
+                    atribuicaoVariavel();
+                }else{
+                    incrementador();
+                } 
             }
             
-        }else if(pertenceAoPrimeiroDe("incrementador")){
+        }/*else if(pertenceAoPrimeiroDe("incrementador") && (this.nextToken.getValor().equals("[") | )){
             incrementador();
-            
-        }else if(this.token.getValor().equals("resultado")){
+        
+        }*/else if(this.token.getValor().equals("resultado")){
             this.token = proximo_token();
             retorno();
             
@@ -755,7 +787,7 @@ public class AnalisadorSintatico {
 		if(this.token.getValor().equals("se")) {
             this.token = proximo_token();
             condSe();
-            
+                
             if(this.token.getValor().equals("entao")) {
                 this.token = proximo_token();
                 
@@ -809,8 +841,23 @@ public class AnalisadorSintatico {
 	}
 
 	private void cond() {
-		
-		if(pertenceAoPrimeiroDe("termo")) {
+		if (this.token.getClasse().getClasse().equals(Classe.IDENTIFICADOR)){
+                   if (ver_token().getClasse().getClasse().equals(Classe.OPERADOR_LOGICO) ||
+                       ver_token().getValor().equals(")")){
+                       negar();
+                       this.token = proximo_token();
+                       vetor();
+                   } 
+                }else{
+                    termo();
+                    if (this.token.getClasse().getClasse().equals(Classe.OPERADOR_RELACIONAL)){
+                        this.token = proximo_token();
+                        termo();
+                    }else{
+                     //ERRO DE TA FALTANDO O OPERADOR DA COND   
+                    }
+                }
+		/*if(pertenceAoPrimeiroDe("termo")) {
 			termo();
 			
 			if(token.getClasse().equals(Classe.OPERADOR_RELACIONAL)) {
@@ -841,7 +888,8 @@ public class AnalisadorSintatico {
 			System.out.println("ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
             novoErro(this.token.getLinha(),"ERRO: aguarda-se um identificador/numero ou Cadeia de caracter");
             this.recuperacaoDeErro();
-		}
+		
+            }*/
 		
 	}
 
@@ -1066,8 +1114,8 @@ public class AnalisadorSintatico {
 		} else {
 			
 			System.out.println("ERRO: erro de sintaxe na condicao do enquanto");
-            novoErro(this.token.getLinha(),"ERRO: erro de sintaxe na condicao do enquanto");
-            this.recuperacaoDeErro();
+                        novoErro(this.token.getLinha(),"ERRO: erro de sintaxe na condicao do enquanto");
+                        this.recuperacaoDeErro();
 		}
 	}
 		
@@ -1102,9 +1150,9 @@ public class AnalisadorSintatico {
 	}
 
 	private void atribuicaoVariavel() {
-        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-            this.token = proximo_token();
-            vetor();
+        //if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            //this.token = proximo_token();
+            //vetor();
             
             if(this.token.getValor().equals("=")){
                 this.token = proximo_token();
@@ -1124,17 +1172,17 @@ public class AnalisadorSintatico {
                 this.recuperacaoDeErro();
             }
             
-        }else{
+        /*}else{
         	System.out.println("ERRO: faltou identificador");
             novoErro(this.token.getLinha(),"ERRO: faltou identificador");
             this.recuperacaoDeErro();
-        }
+        }*/
     }
 
     private void incrementador() {
-        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+        /*if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token = proximo_token();
-            vetor();
+            vetor();*/
             
             if(isIncrementador(this.token.getValor())){ //pra checar se ÃƒÂ© ++ ou --
                 this.token = proximo_token();
@@ -1154,7 +1202,7 @@ public class AnalisadorSintatico {
                     novoErro(this.token.getLinha(),s);
                     this.recuperacaoDeErro();
             }
-        }
+        //}
     }
 
     private void retorno() {
@@ -1207,8 +1255,8 @@ public class AnalisadorSintatico {
     		
     	} else {
     		
-    		System.out.println("ERRO: erro na atribuição de variavel");
-            novoErro(this.token.getLinha(),"ERRO: erro na atribuição de variavel");
+    		System.out.println("ERRO: erro na atribuiï¿½ï¿½o de variavel");
+            novoErro(this.token.getLinha(),"ERRO: erro na atribuiï¿½ï¿½o de variavel");
             this.recuperacaoDeErro();
     	}
     	
@@ -1281,7 +1329,7 @@ public class AnalisadorSintatico {
 
 	private void auxiliarY() {
 		
-		if(token.getValor().equals('*')| token.getValor().equals('/')){
+		if(token.getValor().equals("*")| token.getValor().equals("/")){
             this.token = proximo_token();
             operador();
             auxiliarY();
@@ -1310,6 +1358,10 @@ public class AnalisadorSintatico {
             
         }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             this.token =proximo_token();
+            if (this.token.getValor().equals("(")){
+                chamadaDeMetodo();
+            }
+            
             vetor();
             auxiliarF();
             
@@ -1436,21 +1488,21 @@ public class AnalisadorSintatico {
 		ManipuladorDeArquivo escrita;
 		try {
 		            
-		            escrita = new ManipuladorDeArquivo(arquivo + ".saida2", Modo.ESCRITA);
+		            escrita = new ManipuladorDeArquivo(arquivo + ".saida", Modo.ESCRITA);
 		
 		            if(this.erros.isEmpty() && this.listaDeTokens.isEmpty()){
-		                System.out.println("\nLista de Erros Sintáticos\n");
-		                                escrita.escreverArquivo("\r\nLista de Erros Sintáticos\r\n");
+		                //System.out.println("\nLista de Erros Sintï¿½ticos\n");
+		                  //              escrita.escreverArquivo("\r\nLista de Erros Sintï¿½ticos\r\n");
 		                        
-		                        String s = "SUCESSO: NENHUM ERRO FOI ENCONTRADO!";
+		                        String s = "SUCESSO";
 		
 		                        System.out.println(s);
 		                        escrita.escreverArquivo(s);
 		            }else{   
 		                for (int i = 0; i < this.erros.size(); i++) {
 		                        if (i == 0) {
-		                                System.out.println("\nErros Sintáticos\n");
-		                                escrita.escreverArquivo("\r\nErros Sintáticos\r\n");
+		                                System.out.println("\nErros Sintaticos\n");
+		                                escrita.escreverArquivo("\r\nErros Sintaticos\r\n");
 		                        }
 		                        ErroSintatico e = this.erros.get(i);
 		
@@ -1474,8 +1526,4 @@ public class AnalisadorSintatico {
 		}
 		
 		}
-
-
-    
- 
 }

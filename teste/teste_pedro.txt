@@ -1,22 +1,30 @@
-programa{
-	
+programa{	
 	constantes{
 		inteiro a1_2b = -2.345, b = 2;
 		texto s = "oi";
 	}
-
 	metodo principal(): vazio{
-		
-		a = ((x+2) * 4)/b;
-		b = "eu";
-		b++;
-		b= b--;
-	
+		variaveis{
+			inteiro i = 0;
+		}	
+	enquanto(i < 10)
+		escreva(soma(1+i,2-i));
+		i++;
 	}
-
-	metodo soma(inteiro x, inteiro y): inteiro{
-		
-
+	metodo soma(inteiro x, inteiro y): inteiro{		
+		variaveis{
+			inteiro a = 0;
+			inteiro b = 10;
+		}
+		a++;
+		b--;
+		z = x + y;
+		se(z < a){
+			resultado a; 
+		}se nao se((a < z) && (z < b)){
+			resultado z;
+		}senao{
+			resultado b;
+		}	
 	}
-
 }

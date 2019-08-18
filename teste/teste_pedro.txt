@@ -7,23 +7,24 @@ programa{
 		variaveis{
 			inteiro i, x, y;
 		}	
-	enquanto(i < 10){
-		x = 1 + i;
-		y = 2 - i;
-		escreva(soma(x,y));
-		i++;
-	}
+		enquanto(1 < 10){
+			x = 1 + i;
+			y = 2 - i;
+			escreva(soma(x,y));
+			i++;
+		}
 	}
 	metodo soma(inteiro x, inteiro y): inteiro{		
 		variaveis{
-			inteiro a,b;
+			inteiro a,b,c;
 		}
 		a=0;
 		b=10;
+		c = 5;
 		z = x + y;
-		se(z < a){
+		se(z < a) entao{
 			resultado a; 
-		}se nao se((a < z) && (z < b)){
+		}senao se(z > b){
 			resultado z;
 		}senao{
 			resultado b;

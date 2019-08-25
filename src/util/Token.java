@@ -30,5 +30,7 @@ public class Token {
 	public String toString() {
 		return linha + " " + valor + " " + classe;
 	}
-		
+	
+	
+	
 }

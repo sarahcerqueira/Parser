@@ -225,7 +225,7 @@ public class AnalisadorLexico {
 		
 		
 		
-		if (this.isSeparador(atual) && comentario.isEstadoFinal()) {
+		if ((this.isSeparador(atual) | atual == '\0') && comentario.isEstadoFinal()) {
 		
 			this.createToken(Classe.COMENTARIO, linha);
 			
@@ -243,7 +243,7 @@ public class AnalisadorLexico {
 
 	private void erro() {
 		
-		while(!this.isSeparador(atual)) {
+		while(!this.isSeparador(atual) &&  atual != '\0') {
 					
 			this.concat(atual);
 					
@@ -313,7 +313,7 @@ public class AnalisadorLexico {
 		
 		
 		
-		if (this.isSeparador(atual) && cadeia.isEstadoFinal()) {
+		if ((this.isSeparador(atual) | atual == '\0') && cadeia.isEstadoFinal()) {
 		
 			this.createToken(Classe.CADEIA_DE_CARACTERES, linha);
 			
@@ -513,7 +513,7 @@ public class AnalisadorLexico {
 		
 		
 		
-		if (atual !='.' && this.isSeparador(atual) && this.numero.isEstadoFinal()) {
+		if (atual !='.' && (this.isSeparador(atual) | atual == '\0') && this.numero.isEstadoFinal()) {
 			
 			this.createToken(Classe.NUMERO, linha);
 		
@@ -531,10 +531,10 @@ public class AnalisadorLexico {
 
 	private void erroNumero() {
 		
-		while(atual == '.' | !this.isSeparador(atual)) {
+		while(atual == '.' | (!this.isSeparador(atual) && atual !='\0')) {
 			
 			this.concat(atual);
-			
+			 
 			try {
 				if(leitura.hasNextCaractere()) {
 					atual = prox;
@@ -544,7 +544,7 @@ public class AnalisadorLexico {
 					atual = prox;
 					prox = '\0';
 					
-					if(atual == '.' | !this.isSeparador(atual)) {
+					if(atual == '.' | (!this.isSeparador(atual) && atual !='\0')) {
 						this.concat(atual);
 						this.atualizaChar();
 					}
@@ -603,7 +603,7 @@ public class AnalisadorLexico {
 		
 		
 		
-		if (this.isSeparador(atual) && this.identificador.isEstadoFinal()) {
+		if ((this.isSeparador(atual) | atual == '\0') && this.identificador.isEstadoFinal()) {
 		
 			if(this.palavraReservada.contains(lexema)){
 				

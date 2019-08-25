@@ -32,7 +32,7 @@ public abstract class Automato {
     public abstract boolean isEstadoFinal() ;
     
     /** 
-     * Verifica se o automato esta em estado de erro.
+     * Verifica se o automato está em estado de erro.
      * 
      * @return
      */

@@ -1,0 +1,23 @@
+
+programa { 
+	
+ metodo principal():vazio{
+	b++;
+	soma();
+	a = x + b;
+
+	se(!eu || a > 7) entao{
+	
+		tu = tu++;
+
+		enquanto(a>b){
+			
+			a--;
+		}
+	}
+
+}
+
+	metodo a():vazio{}
+
+}

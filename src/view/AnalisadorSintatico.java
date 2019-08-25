@@ -191,12 +191,23 @@ public class AnalisadorSintatico {
 
     private void constantes(String tipo) {
         if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) { //token == identificador
-            this.addConstantes(token.getValor(), token.getClasse().getClasse(), "constante", tipo);
-        	this.token = proximo_token();
+        	
+        	if(this.isConstante(token.getValor())) {
+        		System.out.println("ERRO: identificador duplicado");
+                novoErro(this.token.getLinha(),"ERRO: identificador duplicado" );
+        		
+        	}else {
+                this.addConstantes(token.getValor(), token.getClasse().getClasse(), "constante", tipo);
+        		
+        	}
+        		
+        		
+        	
+            this.token = proximo_token();
             
             if (this.token.getValor().equals("=")) {
                 this.token = proximo_token();
-                constante();
+                constante(tipo);
                 multiConst(tipo);
                 
             } else {
@@ -211,11 +222,37 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void constante() {
+    private void constante(String tipo) {
     	
-        if (this.token.getClasse().equals(Classe.IDENTIFICADOR) | this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
+        if (this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
                 | this.token.getClasse().equals(Classe.NUMERO)) {
-            this.token = proximo_token();
+        	
+        	//verificação semântica
+        	if(!token.getClasse().equals(Classe.CADEIA_DE_CARACTERES) && tipo.equals("texto")) {
+        		
+        		System.out.println("ERRO: constantes do tipo texto so podem receber cadeias de caracteres");
+                novoErro(this.token.getLinha(),"ERRO: constantes do tipo texto so podem receber cadeias de caracteres" );
+                
+        	} else if(tipo.equals("inteiro") && token.getClasse().equals(Classe.NUMERO) ) {
+        		
+        		if(token.getValor().contains(".")) {
+        			System.out.println("ERRO: constantes do tipo inteiro nao pode receber numero real");
+                    novoErro(this.token.getLinha(),"ERRO: constantes do tipo inteiro não pode receber numero real");
+        		}
+        	} else if(tipo.equals("real") && token.getClasse().equals(Classe.NUMERO)) {
+        		
+        		if(!token.getValor().contains(".")) {
+        			System.out.println("ERRO: constantes do tipo real nao pode receber numero inteiro");
+                    novoErro(this.token.getLinha(),"ERRO: constantes do tipo real nao pode receber numero inteiro");
+        		}
+        	} else if((tipo.equals("real") || tipo.equals("inteiro")) && !token.getClasse().equals(Classe.NUMERO) ) {
+        		
+        		System.out.println("ERRO: a constante do tipo "+ tipo + " aguarda um número");
+                novoErro(this.token.getLinha(),"ERRO: a constante do tipo "+ tipo + " aguarda um número");
+        	}
+            
+        	this.token = proximo_token();
+        	
         } else {
             System.out.println("ERRO: atribuicao de constante sem Numero/CadeiaCaracteres/Identificador");
             novoErro(this.token.getLinha(),"ERRO: atribuicao de constante sem Numero/CadeiaCaracteres/Identificador" );
@@ -948,6 +985,7 @@ public class AnalisadorSintatico {
                 
                 if(token.getValor().equals("}")) {
                     this.token = proximo_token();
+                    senao();
                     
                 } else {
                 	System.out.println("ERRO: faltou o simbolo }");
@@ -969,7 +1007,8 @@ public class AnalisadorSintatico {
 	
 	private void condSenao() {
 		
-		if(pertenceAoPrimeiroDe("conseSe")) {
+		if(this.token.getValor().equals("se")) {
+            this.token = proximo_token();
 			condSe();
 			
 			if(token.getValor().equals("entao")) {

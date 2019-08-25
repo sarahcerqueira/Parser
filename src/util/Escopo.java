@@ -1,0 +1,87 @@
+package util;
+
+import java.util.ArrayList;
+
+public class Escopo {
+	private String nome;
+	private ArrayList<String[]> variaveis;
+	private ArrayList<String[]> paramentros;
+	private String[] retorno;
+
+
+	public Escopo(String nome) {
+		this.nome = nome;
+		variaveis = new ArrayList<String[]>();
+		paramentros = new ArrayList<String[]>();
+		
+	}
+	
+	public String getNome() {
+		return nome;
+	}
+	
+	public void addVariaveis(String cadeia, String token, String tipo) {
+		String [] s = new String[3];
+    	s[0] = cadeia;
+    	s[1] = token;
+    	s[2] = tipo;
+		
+    	variaveis.add(s);
+	}
+	
+	public boolean isVariavel(String v) {
+		int tam, aux =0;
+		tam = variaveis.size();
+		
+		while(aux < tam) {
+			if(variaveis.get(aux)[0].equals(v)) {
+				return true;}
+			
+			aux = aux +1;
+		}
+		
+		return false;
+		
+	}
+	
+	public String getTipo (String v) {
+		int tam, aux =0;
+		tam = variaveis.size();
+		
+		while(aux < tam) {
+			String [] a = variaveis.get(aux);
+			if(a[0].equals(v)) {
+				return a[2]; }
+			
+			aux = aux +1;
+		}
+		
+		return null;
+		
+	}
+	
+	public void addParametros(String tipo, String cadeia) {
+		String [] p = new String[2];
+		
+		p[0] = tipo;
+		p[1] = cadeia;
+		
+		this.paramentros.add(p);
+	}
+	
+	public boolean hasParamentro(String id) {
+		int tam, aux=0;
+		tam = this.paramentros.size();
+		String [] s;
+		
+		while(aux < tam) {
+			s = this.paramentros.get(aux);
+			
+			if(s[1].equals(id)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+}

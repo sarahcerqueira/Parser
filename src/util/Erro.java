@@ -1,12 +1,12 @@
 package util;
 
-public class ErroSintatico {
+public class Erro {
 	
 	private int linha;
 	private String erro;
 	
 	
-	public ErroSintatico(int l, String e) {
+	public Erro(int l, String e) {
 		this.linha = l;
 		this.erro = e;
 	}

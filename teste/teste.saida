@@ -1,3 +1,4 @@
 
-Lista de Erros Sintáticos
-SUCESSO: NENHUM ERRO FOI ENCONTRADO!
+Lista de Erros Semânticos
+6 - ERRO: variavel nao declarada
+10 - ERRO: variavel nao declarada

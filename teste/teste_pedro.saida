@@ -1,3 +1,5 @@
 
-Lista de Erros Sintáticos
-SUCESSO: NENHUM ERRO FOI ENCONTRADO!
+Lista de Erros Semânticos
+18 - ERRO: parametros com identificadores iguais
+21 - ERRO: variavel com identificador igual ao identificador da constante
+26 - ERRO: variavel nao declarada

@@ -14,9 +14,12 @@ programa{
 			i++;
 		}
 	}
-	metodo soma(inteiro x, inteiro y): inteiro{		
+
+
+	metodo soma(inteiro x, inteiro x): inteiro{		
 		variaveis{
 			inteiro a,b,c;
+			real w;
 		}
 		a=0;
 		b=10;

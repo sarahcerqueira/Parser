@@ -9,11 +9,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import util.Classe;
-import util.ErroSintatico;
+import util.Erro;
 import util.ManipuladorDeArquivo;
 import util.Modo;
 import util.ModoException;
 import util.Token;
+import util.Escopo;
 
 /**
  *
@@ -23,17 +24,23 @@ public class AnalisadorSintatico {
 
     private ArrayList<Token> listaDeTokens;
     private ArrayList<String> tipo = new ArrayList<String>();
-    private ArrayList<ErroSintatico> erros;
+    private ArrayList<Erro> erros;
+    private ArrayList<Erro> errosSemanticos;
     private Token token;
     private ArrayList<String[]> constantes;
+    private ArrayList<String[]> variaveis;
+    private ArrayList<Escopo> escopos;
    
 
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens) {
         this.listaDeTokens = listaDeTokens;
         this.listaDeTokens.add(listaDeTokens.size(), new Token("$", Classe.FINALIZADOR, 0)); //add o '$' no final da lista
         this.setup();
-        erros = new ArrayList<ErroSintatico>();
+        erros = new ArrayList<Erro>();
         constantes = new ArrayList<String[]>();
+        variaveis = new ArrayList<String[]>();
+        escopos = new ArrayList<Escopo>();
+        errosSemanticos = new ArrayList<Erro>();
     }
 
     public void setup() {
@@ -48,7 +55,7 @@ public class AnalisadorSintatico {
     }
 
     private void novoErro(int linha, String erro) {
-    	this.erros.add(new ErroSintatico(linha, erro));
+    	this.erros.add(new Erro(linha, erro));
     }
     
     private void recuperacaoDeErro() {
@@ -74,6 +81,10 @@ public class AnalisadorSintatico {
             System.out.println("ERRO: codigo encerrado sem atingir o $");
         }
         
+        if (this.buscaEscopo("principal") == null) {
+        	System.out.println("ERRO: metodo principal não existe");
+    		novoErroSemantico(-1,"ERRO: metodo principal não existe");
+        }
         
         escreveSaida(arquivo);
 
@@ -192,9 +203,10 @@ public class AnalisadorSintatico {
     private void constantes(String tipo) {
         if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) { //token == identificador
         	
+        	//Erro Semantico
         	if(this.isConstante(token.getValor())) {
         		System.out.println("ERRO: identificador duplicado");
-                novoErro(this.token.getLinha(),"ERRO: identificador duplicado" );
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: identificador duplicado" );
         		
         	}else {
                 this.addConstantes(token.getValor(), token.getClasse().getClasse(), "constante", tipo);
@@ -227,28 +239,28 @@ public class AnalisadorSintatico {
         if (this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
                 | this.token.getClasse().equals(Classe.NUMERO)) {
         	
-        	//verificação semântica
+        	//Erro semântico
         	if(!token.getClasse().equals(Classe.CADEIA_DE_CARACTERES) && tipo.equals("texto")) {
         		
         		System.out.println("ERRO: constantes do tipo texto so podem receber cadeias de caracteres");
-                novoErro(this.token.getLinha(),"ERRO: constantes do tipo texto so podem receber cadeias de caracteres" );
+        		novoErroSemantico(this.token.getLinha(),"ERRO: constantes do tipo texto so podem receber cadeias de caracteres" );
                 
         	} else if(tipo.equals("inteiro") && token.getClasse().equals(Classe.NUMERO) ) {
         		
         		if(token.getValor().contains(".")) {
         			System.out.println("ERRO: constantes do tipo inteiro nao pode receber numero real");
-                    novoErro(this.token.getLinha(),"ERRO: constantes do tipo inteiro não pode receber numero real");
+        			novoErroSemantico(this.token.getLinha(),"ERRO: constantes do tipo inteiro não pode receber numero real");
         		}
         	} else if(tipo.equals("real") && token.getClasse().equals(Classe.NUMERO)) {
         		
         		if(!token.getValor().contains(".")) {
         			System.out.println("ERRO: constantes do tipo real nao pode receber numero inteiro");
-                    novoErro(this.token.getLinha(),"ERRO: constantes do tipo real nao pode receber numero inteiro");
+        			novoErroSemantico(this.token.getLinha(),"ERRO: constantes do tipo real nao pode receber numero inteiro");
         		}
         	} else if((tipo.equals("real") || tipo.equals("inteiro")) && !token.getClasse().equals(Classe.NUMERO) ) {
         		
         		System.out.println("ERRO: a constante do tipo "+ tipo + " aguarda um número");
-                novoErro(this.token.getLinha(),"ERRO: a constante do tipo "+ tipo + " aguarda um número");
+        		novoErroSemantico(this.token.getLinha(),"ERRO: a constante do tipo "+ tipo + " aguarda um número");
         	}
             
         	this.token = proximo_token();
@@ -401,16 +413,29 @@ public class AnalisadorSintatico {
     }
 
     private void metodo() {
-
+    	String escopo;
+    	
         if (this.token.getValor().equals("metodo")) {
             this.token = proximo_token();
 
             if (this.token.getClasse().equals(Classe.IDENTIFICADOR) || this.token.getValor().equals("principal") ) {
-                this.token = proximo_token();
+            	
+            	escopo = token.getValor();
+            	
+            	//Erro Semantico
+            	if(this.buscaEscopo(escopo)== null) {
+            		this.addEscopo(escopo);
+            		
+            	} else {
+            		System.out.println("ERRO: metodo já existe");
+            		novoErroSemantico(this.token.getLinha(),"ERRO: metodo já existe");
+            	}
+            	
+            	this.token = proximo_token();                
 
                 if (this.token.getValor().equals("(")) {
                     this.token = proximo_token();
-                    listaParametros();
+                    listaParametros(escopo);
                     
                     if (this.token.getValor().equals(")")) {
                     	this.token = proximo_token();
@@ -423,8 +448,8 @@ public class AnalisadorSintatico {
 
                                 if (this.token.getValor().equals("{")) {
                                     this.token = proximo_token();
-                                    declaracaoVariaveis();
-                                    escopoMetodo();
+                                    declaracaoVariaveis(escopo);
+                                    escopoMetodo(escopo);
 
                                     if (this.token.getValor().equals("}")) {
                                         this.token = proximo_token();
@@ -487,13 +512,25 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void listaParametros() {
+    private void listaParametros(String escopo) {
+    	String tipo, cadeia;
+    	
         if (this.tipo.contains(this.token.getValor())) {
+        	tipo = token.getValor();
             this.token = proximo_token();
 
             if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
+            	
+            	if(this.hasParamentro(escopo, token.getValor())) {
+            		System.out.println("ERRO: parametros com identificadores iguais");
+            		novoErroSemantico(this.token.getLinha(),"ERRO: parametros com identificadores iguais");
+            	
+            	} else {
+            		this.addParamentos(escopo, tipo, token.getValor());
+            	}
+            	
                 this.token = proximo_token();
-                maisParametros();
+                maisParametros(escopo);
 
             } else {
             	System.out.println("ERRO:falta um identificador");
@@ -504,19 +541,19 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void maisParametros() {
+    private void maisParametros(String escopo) {
 
         if (this.token.getValor().equals(",")) {
             this.token = proximo_token();
-            listaParametros();
+            listaParametros(escopo);
         }
 
     }
 
-    private void escopoMetodo() {
+    private void escopoMetodo(String escopo) {
         if(pertenceAoPrimeiroDe("comandos")){
-            comandos();
-            escopoMetodo();
+            comandos(escopo);
+            escopoMetodo(escopo);
         }
     }
 
@@ -599,14 +636,14 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void declaracaoVariaveis() {
+    private void declaracaoVariaveis(String escopo) {
     	
         if(this.token.getValor().equals("variaveis")){
             this.token = proximo_token();
             
             if(this.token.getValor().equals("{")){
                 this.token = proximo_token();
-                varV();
+                varV(escopo);
                 
                 if(this.token.getValor().equals("}")){
                     this.token = proximo_token();
@@ -625,12 +662,13 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void varV() {
+    private void varV(String escopo) {
     	
         if(this.tipo.contains(this.token.getValor())){
+        	String tipo = this.token.getValor();
             this.token = proximo_token();
-            complementoV();
-            maisVariaveis();
+            complementoV(escopo, tipo);
+            maisVariaveis(escopo);
             
         }else{
         	System.out.println("ERRO: aguarda-se um tipo de variavel boleano/inteiro/real/texto");
@@ -639,12 +677,26 @@ public class AnalisadorSintatico {
         }
     }
     
-	private void complementoV() {
+	private void complementoV(String escopo, String tipo) {
 		
        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+    	   
+    	   if(this.isConstante(token.getValor())) {
+    		   System.out.println("ERRO: variavel com identificador igual ao identificador da constante");
+    		   novoErroSemantico(this.token.getLinha(),"ERRO: variavel com identificador igual ao identificador da constante");
+    	   }
+    	   
+    	   if(!this.hasVariarel(escopo, token.getValor())) {
+    		   this.addVariaveis(escopo, token.getValor(), token.getClasse().getClasse(), tipo);
+    		   
+    	   } else {
+    		   System.out.println("ERRO: variaveis com identificadores iguais");
+       			novoErroSemantico(this.token.getLinha(),"ERRO: variaveis com identificadores iguais");  
+    	   }
+    	   
            this.token = proximo_token();
            vetor();
-           variavelMesmoTipo();
+           variavelMesmoTipo(escopo, tipo);
            
        }else {
     	   
@@ -656,10 +708,10 @@ public class AnalisadorSintatico {
        
     }
 
-    private void variavelMesmoTipo() {
+    private void variavelMesmoTipo(String escopo, String tipo) {
         if(this.token.getValor().equals(",")) {
             this.token = proximo_token();
-            complementoV();
+            complementoV(escopo, tipo);
             
          } else if(this.token.getValor().equals(";")) {
              this.token = proximo_token();
@@ -672,15 +724,15 @@ public class AnalisadorSintatico {
          }
     }
     
-    private void maisVariaveis() {
+    private void maisVariaveis(String escopo) {
     	
         if(this.tipo.contains(this.token.getValor())){ //Primeiro("VarV") == Tipo
-            varV();
+            varV(escopo);
         }
     }
 
 
-    private void comandos() {
+    private void comandos(String escopo) {
         if(pertenceAoPrimeiroDe("leia")){
             leia();
             
@@ -688,14 +740,14 @@ public class AnalisadorSintatico {
             escreva();
             
         }else if(pertenceAoPrimeiroDe("se")){
-            se();
+            se(escopo);
             
         }else if(pertenceAoPrimeiroDe("enquanto")){
-            enquanto();
+            enquanto(escopo);
             
         }else if(pertenceAoPrimeiroDe("atribuicaoVariavel") && !this.listaDeTokens.get(0).getValor().equals("(") && 
         		!this.listaDeTokens.get(0).getClasse().equals(Classe.OPERADOR_ARITMETICO)){
-            atribuicaoVariavel();
+            atribuicaoVariavel(escopo);
             
         }else if(pertenceAoPrimeiroDe("chamadaDeMetodo") && this.listaDeTokens.get(0).getValor().equals("(")){
             chamadaDeMetodo();
@@ -793,7 +845,7 @@ public class AnalisadorSintatico {
 		
 	}
 
-	private void se() {
+	private void se(String escopo) {
         
 		if(this.token.getValor().equals("se")) {
             this.token = proximo_token();
@@ -804,11 +856,11 @@ public class AnalisadorSintatico {
                 
                 if(this.token.getValor().equals("{")) {
                     this.token = proximo_token();
-                    blocoSe();
+                    blocoSe(escopo);
                     
                     if(this.token.getValor().equals("}")) {
                         this.token = proximo_token();
-                        senao();
+                        senao(escopo);
                         
                     } else {
                     	System.out.println("ERRO: faltou o simbolo }");
@@ -964,16 +1016,16 @@ public class AnalisadorSintatico {
 	}
 	
     
-	private void blocoSe() {
+	private void blocoSe(String escopo) {
 		
 		if(pertenceAoPrimeiroDe("comandos")) {
-			comandos();
-			blocoSe();
+			comandos(escopo);
+			blocoSe(escopo);
 		}
 		
 	}
 
-	private void senao() {
+	private void senao(String escopo) {
 		
 		if(token.getValor().equals("senao")) {
             this.token = proximo_token();
@@ -981,11 +1033,11 @@ public class AnalisadorSintatico {
             
             if(token.getValor().equals("{")) {
                 this.token = proximo_token();
-                blocoSe();
+                blocoSe(escopo);
                 
                 if(token.getValor().equals("}")) {
                     this.token = proximo_token();
-                    senao();
+                    senao(escopo);
                     
                 } else {
                 	System.out.println("ERRO: faltou o simbolo }");
@@ -1024,7 +1076,7 @@ public class AnalisadorSintatico {
 		
 	}
 
-	private void enquanto() {
+	private void enquanto(String escopo) {
 		if(token.getValor().equals("enquanto")) {
             this.token = proximo_token();
 
@@ -1037,7 +1089,7 @@ public class AnalisadorSintatico {
                     
             		if(token.getValor().equals("{")) {
                         this.token = proximo_token();
-                        conteudoLaco();
+                        conteudoLaco(escopo);
                         
                         if(token.getValor().equals("}")) {
                             this.token = proximo_token();
@@ -1075,11 +1127,11 @@ public class AnalisadorSintatico {
 	
 	
 
-    private void conteudoLaco() {
+    private void conteudoLaco(String escopo) {
     	
 		if(pertenceAoPrimeiroDe("comandos")) {
-			comandos();
-			conteudoLaco();
+			comandos(escopo);
+			conteudoLaco(escopo);
 		}
 		
 	}
@@ -1145,12 +1197,17 @@ public class AnalisadorSintatico {
 		
 	}
 
-	private void atribuicaoVariavel() {
+	private void atribuicaoVariavel(String escopo) {
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
         	
+        	//Erro semantico
         	if(this.isConstante(token.getValor())) {
         		System.out.println("ERRO: atribuição de constante");
-                novoErro(this.token.getLinha(),"ERRO: atribuição de constante");        		
+        		novoErroSemantico(this.token.getLinha(),"ERRO: atribuição de constante");    
+        		
+        	}else if(!this.hasVariarel(escopo, token.getValor())) {
+        		System.out.println("ERRO: variavel nao declarada");
+        		novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada"); 
         	}
         	
             this.token = proximo_token();
@@ -1488,25 +1545,40 @@ public class AnalisadorSintatico {
 		            
 		            escrita = new ManipuladorDeArquivo(arquivo + ".saida", Modo.ESCRITA);
 		
-		            if(this.erros.isEmpty() && this.listaDeTokens.isEmpty()){
-		                System.out.println("\nLista de Erros Sintáticos\n");
-		                                escrita.escreverArquivo("\r\nLista de Erros Sintáticos\r\n");
-		                        
-		                        String s = "SUCESSO: NENHUM ERRO FOI ENCONTRADO!";
-		
-		                        System.out.println(s);
-		                        escrita.escreverArquivo(s);
-		            }else{   
+		            if(!this.erros.isEmpty() && !this.listaDeTokens.isEmpty()){
+		             
 		                for (int i = 0; i < this.erros.size(); i++) {
 		                        if (i == 0) {
 		                                System.out.println("\nErros Sintáticos\n");
 		                                escrita.escreverArquivo("\r\n Erros Sintáticos \r\n");
 		                        }
-		                        ErroSintatico e = this.erros.get(i);
+		                        Erro e = this.erros.get(i);
 		
 		                        System.out.println(e.getLinha() + " - " + e.getErro());
 		                        escrita.escreverArquivo(e.getLinha() + " - " + e.getErro()+ "\r\n");
 		                }
+		            }
+		            
+		           
+                    
+		            if (this.errosSemanticos.isEmpty()) {
+		            	String s = "SUCESSO: NENHUM ERRO FOI ENCONTRADO!";
+                		
+                        System.out.println(s);
+                        escrita.escreverArquivo(s);
+                        
+		            } else {
+		            	
+		            	 System.out.println("\nLista de Erros Semânticos\n");
+		                    escrita.escreverArquivo("\nLista de Erros Semânticos\n");
+		            	
+		            	for (int i = 0; i < this.errosSemanticos.size(); i++) {
+	                        	           Erro e = this.errosSemanticos.get(i);
+	
+	                        System.out.println(e.getLinha() + " - " + e.getErro());
+	                        escrita.escreverArquivo(e.getLinha() + " - " + e.getErro()+ "\r\n");
+	                }
+		            	
 		            }
 		
 		escrita.fechaArquivo();
@@ -1548,6 +1620,72 @@ public class AnalisadorSintatico {
     	}
     	
     	return false;
+    }
+    
+    private void addEscopo(String nome) {
+    	this.escopos.add(new Escopo(nome));
+    }
+    
+    private boolean hasVariarel(String escopo, String cadeia) {
+    	Escopo e = buscaEscopo(escopo);
+
+    	return e.isVariavel(cadeia);
+    }
+    
+    private void addVariaveis(String escopo, String cadeia, String token, String tipo) {
+    	Escopo e = buscaEscopo(escopo);
+    	
+    	if(e != null) {
+    		e.addVariaveis(cadeia, token, tipo);
+    	}
+    	
+    }
+    
+    private String getTipo(String escopo, String cadeia) {
+    	Escopo e = buscaEscopo(escopo);
+    	
+    	if(e != null) {
+    		return e.getTipo(cadeia);
+    	}
+    	
+    	return null;
+    	
+    }
+    
+    private Escopo buscaEscopo(String nome) {
+    	int tam, aux=0;
+    	
+    	tam = escopos.size();
+    	
+    	while(aux < tam) {
+    		Escopo e = escopos.get(aux);
+    		
+    		if(e.getNome().equals(nome)) {
+    			return e;
+    		}
+    		
+    		aux = aux +1;
+    	}
+    	
+    	return null;
+    }
+    
+    private void novoErroSemantico(int linha, String erro) {
+    	this.errosSemanticos.add(new Erro(linha, erro));
+
+    }
+    
+    private void addParamentos(String escopo, String tipo, String cadeia) {
+    	Escopo e = this.buscaEscopo(escopo);
+    	
+    	e.addParametros(tipo, cadeia);
+    }
+    
+    private boolean hasParamentro(String escopo, String cadeia) {
+    	Escopo e = this.buscaEscopo(escopo);
+    	
+    	return e.hasParamentro(cadeia);
+    	
     }
  
 }

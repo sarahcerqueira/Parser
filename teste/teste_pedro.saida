@@ -1,5 +1,5 @@
 
-Lista de Erros Semânticos
+Lista de Erros Semanticos
 18 - ERRO: parametros com identificadores iguais
 21 - ERRO: variavel com identificador igual ao identificador da constante
 26 - ERRO: variavel nao declarada

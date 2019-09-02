@@ -82,8 +82,8 @@ public class AnalisadorSintatico {
         }
         
         if (this.buscaEscopo("principal") == null) {
-        	System.out.println("ERRO: metodo principal não existe");
-    		novoErroSemantico(-1,"ERRO: metodo principal não existe");
+        	System.out.println("ERRO: metodo principal nï¿½o existe");
+    		novoErroSemantico(-1,"ERRO: metodo principal nï¿½o existe");
         }
         
         escreveSaida(arquivo);
@@ -209,7 +209,7 @@ public class AnalisadorSintatico {
         		this.novoErroSemantico(this.token.getLinha(),"ERRO: identificador duplicado" );
         		
         	}else {
-                this.addConstantes(token.getValor(), token.getClasse().getClasse(), "constante", tipo);
+                    this.addConstantes(token.getValor(), token.getClasse().getClasse(), "constante", tipo);
         		
         	}
         		
@@ -239,7 +239,7 @@ public class AnalisadorSintatico {
         if (this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)
                 | this.token.getClasse().equals(Classe.NUMERO)) {
         	
-        	//Erro semântico
+        	//Erro semï¿½ntico
         	if(!token.getClasse().equals(Classe.CADEIA_DE_CARACTERES) && tipo.equals("texto")) {
         		
         		System.out.println("ERRO: constantes do tipo texto so podem receber cadeias de caracteres");
@@ -249,7 +249,7 @@ public class AnalisadorSintatico {
         		
         		if(token.getValor().contains(".")) {
         			System.out.println("ERRO: constantes do tipo inteiro nao pode receber numero real");
-        			novoErroSemantico(this.token.getLinha(),"ERRO: constantes do tipo inteiro não pode receber numero real");
+        			novoErroSemantico(this.token.getLinha(),"ERRO: constantes do tipo inteiro nï¿½o pode receber numero real");
         		}
         	} else if(tipo.equals("real") && token.getClasse().equals(Classe.NUMERO)) {
         		
@@ -259,8 +259,8 @@ public class AnalisadorSintatico {
         		}
         	} else if((tipo.equals("real") || tipo.equals("inteiro")) && !token.getClasse().equals(Classe.NUMERO) ) {
         		
-        		System.out.println("ERRO: a constante do tipo "+ tipo + " aguarda um número");
-        		novoErroSemantico(this.token.getLinha(),"ERRO: a constante do tipo "+ tipo + " aguarda um número");
+        		System.out.println("ERRO: a constante do tipo "+ tipo + " aguarda um nï¿½mero");
+        		novoErroSemantico(this.token.getLinha(),"ERRO: a constante do tipo "+ tipo + " aguarda um nï¿½mero");
         	}
             
         	this.token = proximo_token();
@@ -364,6 +364,12 @@ public class AnalisadorSintatico {
 
     private void opI2() {
         if (this.token.getClasse().equals(Classe.NUMERO)) {
+            
+            if(!isNumeroInteiro(this.token.getValor())){
+                System.out.println("ERRO: Indice(s) de vetores ou matrizes devem ser um numeros inteiros");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: Indice(s) de vetores ou matrizes devem ser um numeros inteiros");
+            }
+            
             this.token = proximo_token();
 
         } else if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
@@ -427,8 +433,8 @@ public class AnalisadorSintatico {
             		this.addEscopo(escopo);
             		
             	} else {
-            		System.out.println("ERRO: metodo já existe");
-            		novoErroSemantico(this.token.getLinha(),"ERRO: metodo já existe");
+            		System.out.println("ERRO: metodo ja existe");
+            		novoErroSemantico(this.token.getLinha(),"ERRO: metodo ja existe");
             	}
             	
             	this.token = proximo_token();                
@@ -762,7 +768,7 @@ public class AnalisadorSintatico {
             }
             
         }else if(pertenceAoPrimeiroDe("incrementador")){
-            incrementador();
+            incrementador(escopo);
             
         }else if(this.token.getValor().equals("resultado")){
             this.token = proximo_token();
@@ -1202,8 +1208,8 @@ public class AnalisadorSintatico {
         	
         	//Erro semantico
         	if(this.isConstante(token.getValor())) {
-        		System.out.println("ERRO: atribuição de constante");
-        		novoErroSemantico(this.token.getLinha(),"ERRO: atribuição de constante");    
+        		System.out.println("ERRO: atribuiï¿½ï¿½o de constante");
+        		novoErroSemantico(this.token.getLinha(),"ERRO: atribuicaoo de constante");    
         		
         	}else if(!this.hasVariarel(escopo, token.getValor())) {
         		System.out.println("ERRO: variavel nao declarada");
@@ -1238,12 +1244,22 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void incrementador() {
+    private void incrementador(String escopo) {
+        
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+            Escopo e = this.buscaEscopo(escopo);
+            if(!e.isVariavel(this.token.getValor()) || !isConstante(this.token.getValor())) {
+            	System.out.println("ERRO: variavel nao declarada");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");
+            		
+            }else{
+                System.out.println("wtf");
+            }
+            
             this.token = proximo_token();
             vetor();
             
-            if(isIncrementador(this.token.getValor())){ //pra checar se ÃƒÂ© ++ ou --
+            if(isIncrementador(this.token.getValor())){ //pra checar se eh ++ ou --
                 this.token = proximo_token();
                 
                 if(this.token.getValor().equals(";")){
@@ -1314,8 +1330,8 @@ public class AnalisadorSintatico {
     		
     	} else {
     		
-    		System.out.println("ERRO: erro na atribuição de variavel");
-            novoErro(this.token.getLinha(),"ERRO: erro na atribuição de variavel");
+    		System.out.println("ERRO: erro na atribuiï¿½ï¿½o de variavel");
+            novoErro(this.token.getLinha(),"ERRO: erro na atribuiï¿½ï¿½o de variavel");
             this.recuperacaoDeErro();
     	}
     	
@@ -1549,8 +1565,8 @@ public class AnalisadorSintatico {
 		             
 		                for (int i = 0; i < this.erros.size(); i++) {
 		                        if (i == 0) {
-		                                System.out.println("\nErros Sintáticos\n");
-		                                escrita.escreverArquivo("\r\n Erros Sintáticos \r\n");
+		                                System.out.println("\nErros Sintï¿½ticos\n");
+		                                escrita.escreverArquivo("\r\n Erros Sintï¿½ticos \r\n");
 		                        }
 		                        Erro e = this.erros.get(i);
 		
@@ -1569,8 +1585,8 @@ public class AnalisadorSintatico {
                         
 		            } else {
 		            	
-		            	 System.out.println("\nLista de Erros Semânticos\n");
-		                    escrita.escreverArquivo("\nLista de Erros Semânticos\n");
+		            	 System.out.println("\nLista de Erros Semanticos\n");
+		                    escrita.escreverArquivo("\nLista de Erros Semanticos\n");
 		            	
 		            	for (int i = 0; i < this.errosSemanticos.size(); i++) {
 	                        	           Erro e = this.errosSemanticos.get(i);
@@ -1686,6 +1702,10 @@ public class AnalisadorSintatico {
     	
     	return e.hasParamentro(cadeia);
     	
+    }
+    
+    private boolean isNumeroInteiro(String numero){
+        return numero.matches("[0-9]*");
     }
  
 }

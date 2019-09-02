@@ -25,7 +25,8 @@ public class Compilador {
     		if(arquivos[i].getName().endsWith(".txt"))
     		{       			
     			//executa o analisador lexico e obtem a lista de tokens
-    		      AnalisadorLexico al = new AnalisadorLexico();
+                      System.out.println("\nAnalisando arquivo: "+arquivos[i].getName()+"\n");
+                      AnalisadorLexico al = new AnalisadorLexico();
     		      listaDeTokens = al.executar(arquivos[i].getPath());
     		      
     		      if(al.getErro().isEmpty()) {
@@ -34,7 +35,7 @@ public class Compilador {
 	    		      AnalisadorSintatico as = new AnalisadorSintatico(listaDeTokens);
 	    		      as.executar(arquivos[i].getPath()); 
     		      } else {
-    		    	  System.out.println("\nErro léxico no arquivo: " + arquivos[i].getPath() + "\n");
+    		    	  System.out.println("\nErro lï¿½xico no arquivo: " + arquivos[i].getPath() + "\n");
     		      }
     		}
     		

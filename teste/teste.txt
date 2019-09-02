@@ -2,7 +2,14 @@
 programa { 
 	
  metodo principal():vazio{
-	b++;
+
+	variaveis{
+		real vet[3];
+	}	
+
+	vet[2.3][3] = 10;
+
+        b++;
 	soma();
 	a = x + b;
 

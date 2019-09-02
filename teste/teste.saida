@@ -1,7 +1,9 @@
 
 Lista de Erros Semanticos
-9 - ERRO: Indice(s) de vetores ou matrizes devem ser um numeros inteiros
-11 - ERRO: variavel nao declarada
-13 - ERRO: variavel nao declarada
+4 - ERRO: o tipo vazio nao pode ser usado em declaracoes de constantes
+12 - ERRO: o tipo vazio nao pode ser usado em declaracoes de variaveis
+15 - ERRO: Indice(s) de vetores ou matrizes devem ser um numeros inteiros
 17 - ERRO: variavel nao declarada
-21 - ERRO: variavel nao declarada
+19 - ERRO: variavel nao declarada
+23 - ERRO: variavel nao declarada
+27 - ERRO: variavel nao declarada

@@ -181,9 +181,16 @@ public class AnalisadorSintatico {
     private void estruturaConstantes() {
     	
         if (this.tipo.contains(this.token.getValor())) { //se token == tipo
-        	String tipo = this.token.getValor();
+            
+            String type = this.token.getValor();
+            
+            if(type.equals("vazio")){
+                System.out.println("ERRO: o tipo vazio nao pode ser usado em declaracoes de constantes");
+                novoErroSemantico(this.token.getLinha(),"ERRO: o tipo vazio nao pode ser usado em declaracoes de constantes" );	
+            }
+            
             this.token = proximo_token();
-            constantes(tipo);
+            constantes(type);
             
             if (this.token.getValor().equals(";")) {
                 this.token = proximo_token();
@@ -382,6 +389,12 @@ public class AnalisadorSintatico {
         }
     }
 
+    
+    /* 
+        checar se o indice é inteiro
+        checar se o indice está entre 0 e o numero declarado?
+        checar se o vetor não está sendo referenciado como matriz, ou o contrário
+    */
     private void vetor() {
         if (this.token.getValor().equals("[")) {
             this.token = proximo_token();
@@ -671,9 +684,15 @@ public class AnalisadorSintatico {
     private void varV(String escopo) {
     	
         if(this.tipo.contains(this.token.getValor())){
-        	String tipo = this.token.getValor();
+            String type = this.token.getValor();
+            
+            if(type.equals("vazio")){
+                System.out.println("ERRO: o tipo vazio nao pode ser usado em declaracoes de variaveis");
+                novoErroSemantico(this.token.getLinha(),"ERRO: o tipo vazio nao pode ser usado em declaracoes de variaveis" );	
+            }
+            
             this.token = proximo_token();
-            complementoV(escopo, tipo);
+            complementoV(escopo, type);
             maisVariaveis(escopo);
             
         }else{
@@ -683,17 +702,19 @@ public class AnalisadorSintatico {
         }
     }
     
-	private void complementoV(String escopo, String tipo) {
-		
+private void complementoV(String escopo, String tipo) {
+        
        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-    	   
+    	  
+           String caso = "nenhum";
+           
     	   if(this.isConstante(token.getValor())) {
     		   System.out.println("ERRO: variavel com identificador igual ao identificador da constante");
     		   novoErroSemantico(this.token.getLinha(),"ERRO: variavel com identificador igual ao identificador da constante");
     	   }
     	   
     	   if(!this.hasVariarel(escopo, token.getValor())) {
-    		   this.addVariaveis(escopo, token.getValor(), token.getClasse().getClasse(), tipo);
+    		   this.addVariaveis(escopo, token.getValor(), token.getClasse().getClasse(), tipo, caso);
     		   
     	   } else {
     		   System.out.println("ERRO: variaveis com identificadores iguais");
@@ -1648,11 +1669,12 @@ public class AnalisadorSintatico {
     	return e.isVariavel(cadeia);
     }
     
-    private void addVariaveis(String escopo, String cadeia, String token, String tipo) {
-    	Escopo e = buscaEscopo(escopo);
+    private void addVariaveis(String escopo, String cadeia, String token, String tipo, String caso) {
+    	
+        Escopo e = buscaEscopo(escopo);
     	
     	if(e != null) {
-    		e.addVariaveis(cadeia, token, tipo);
+    		e.addVariaveis(cadeia, token, tipo, caso);
     	}
     	
     }

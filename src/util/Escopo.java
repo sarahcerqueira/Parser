@@ -20,11 +20,12 @@ public class Escopo {
 		return nome;
 	}
 	
-	public void addVariaveis(String cadeia, String token, String tipo) {
-		String [] s = new String[3];
-    	s[0] = cadeia;
-    	s[1] = token;
-    	s[2] = tipo;
+	public void addVariaveis(String cadeia, String token, String tipo, String caso) {
+            String [] s = new String[4];
+            s[0] = cadeia;
+            s[1] = token;
+            s[2] = tipo;
+            s[3] = caso;
 		
     	variaveis.add(s);
 	}

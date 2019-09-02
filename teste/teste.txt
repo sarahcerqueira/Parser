@@ -1,10 +1,16 @@
 
 programa { 
 	
- metodo principal():vazio{
+constantes{
+	vazio t = 1;
+}
+
+metodo principal():vazio{
+
 
 	variaveis{
 		real vet[3];
+		vazio u;
 	}	
 
 	vet[2.3][3] = 10;

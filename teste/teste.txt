@@ -2,20 +2,24 @@
 programa { 
 	
 constantes{
-	vazio t = 1;
+	
 }
 
 metodo principal():vazio{
 
 
 	variaveis{
-		real vet[3];
-		vazio u;
+
+		real vet[3], a;
+		inteiro b, d;
+
 	}	
 
-	vet[2.3][3] = 10;
+	vet[2][3] = 10;
+	
+	d = ++b;
 
-        b++;
+    b++;
 	soma();
 	a = x + b;
 

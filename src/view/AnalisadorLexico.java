@@ -44,7 +44,7 @@ public class AnalisadorLexico {
 		inicializar();
 		atual = leitura.nextCaractere();
 		prox = leitura.nextCaractere();
-		linha = 0;
+		linha = 1;
 		
 		while(atual != '\0') {
 			

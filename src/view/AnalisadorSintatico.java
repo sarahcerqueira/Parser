@@ -28,8 +28,9 @@ public class AnalisadorSintatico {
     private ArrayList<Erro> errosSemanticos;
     private Token token;
     private ArrayList<String[]> constantes;
-    private ArrayList<String[]> variaveis;
     private ArrayList<Escopo> escopos;
+    private String[] var;
+    private String escopo;
    
 
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens) {
@@ -38,7 +39,6 @@ public class AnalisadorSintatico {
         this.setup();
         erros = new ArrayList<Erro>();
         constantes = new ArrayList<String[]>();
-        variaveis = new ArrayList<String[]>();
         escopos = new ArrayList<Escopo>();
         errosSemanticos = new ArrayList<Erro>();
     }
@@ -432,7 +432,6 @@ public class AnalisadorSintatico {
     }
 
     private void metodo() {
-    	String escopo;
     	
         if (this.token.getValor().equals("metodo")) {
             this.token = proximo_token();
@@ -454,7 +453,7 @@ public class AnalisadorSintatico {
 
                 if (this.token.getValor().equals("(")) {
                     this.token = proximo_token();
-                    listaParametros(escopo);
+                    listaParametros();
                     
                     if (this.token.getValor().equals(")")) {
                     	this.token = proximo_token();
@@ -467,8 +466,8 @@ public class AnalisadorSintatico {
 
                                 if (this.token.getValor().equals("{")) {
                                     this.token = proximo_token();
-                                    declaracaoVariaveis(escopo);
-                                    escopoMetodo(escopo);
+                                    declaracaoVariaveis();
+                                    escopoMetodo();
 
                                     if (this.token.getValor().equals("}")) {
                                         this.token = proximo_token();
@@ -531,7 +530,7 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void listaParametros(String escopo) {
+    private void listaParametros() {
     	String tipo, cadeia;
     	
         if (this.tipo.contains(this.token.getValor())) {
@@ -540,16 +539,16 @@ public class AnalisadorSintatico {
 
             if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
             	
-            	if(this.hasParamentro(escopo, token.getValor())) {
+            	if(this.hasParamentro( token.getValor())) {
             		System.out.println("ERRO: parametros com identificadores iguais");
             		novoErroSemantico(this.token.getLinha(),"ERRO: parametros com identificadores iguais");
             	
             	} else {
-            		this.addParamentos(escopo, tipo, token.getValor());
+            		this.addParamentos(tipo, token.getValor());
             	}
             	
                 this.token = proximo_token();
-                maisParametros(escopo);
+                maisParametros();
 
             } else {
             	System.out.println("ERRO:falta um identificador");
@@ -560,19 +559,19 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void maisParametros(String escopo) {
+    private void maisParametros() {
 
         if (this.token.getValor().equals(",")) {
             this.token = proximo_token();
-            listaParametros(escopo);
+            listaParametros();
         }
 
     }
 
-    private void escopoMetodo(String escopo) {
+    private void escopoMetodo() {
         if(pertenceAoPrimeiroDe("comandos")){
-            comandos(escopo);
-            escopoMetodo(escopo);
+            comandos();
+            escopoMetodo();
         }
     }
 
@@ -655,14 +654,14 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void declaracaoVariaveis(String escopo) {
+    private void declaracaoVariaveis() {
     	
         if(this.token.getValor().equals("variaveis")){
             this.token = proximo_token();
             
             if(this.token.getValor().equals("{")){
                 this.token = proximo_token();
-                varV(escopo);
+                varV();
                 
                 if(this.token.getValor().equals("}")){
                     this.token = proximo_token();
@@ -681,7 +680,7 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void varV(String escopo) {
+    private void varV() {
     	
         if(this.tipo.contains(this.token.getValor())){
             String type = this.token.getValor();
@@ -692,8 +691,8 @@ public class AnalisadorSintatico {
             }
             
             this.token = proximo_token();
-            complementoV(escopo, type);
-            maisVariaveis(escopo);
+            complementoV(type);
+            maisVariaveis();
             
         }else{
         	System.out.println("ERRO: aguarda-se um tipo de variavel boleano/inteiro/real/texto");
@@ -702,7 +701,7 @@ public class AnalisadorSintatico {
         }
     }
     
-private void complementoV(String escopo, String tipo) {
+private void complementoV(String tipo) {
         
        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
     	  
@@ -713,8 +712,8 @@ private void complementoV(String escopo, String tipo) {
     		   novoErroSemantico(this.token.getLinha(),"ERRO: variavel com identificador igual ao identificador da constante");
     	   }
     	   
-    	   if(!this.hasVariarel(escopo, token.getValor())) {
-    		   this.addVariaveis(escopo, token.getValor(), token.getClasse().getClasse(), tipo, caso);
+    	   if(!this.hasVariarel(token.getValor())) {
+    		   this.addVariaveis(token.getValor(), token.getClasse().getClasse(), tipo, caso);
     		   
     	   } else {
     		   System.out.println("ERRO: variaveis com identificadores iguais");
@@ -723,7 +722,7 @@ private void complementoV(String escopo, String tipo) {
     	   
            this.token = proximo_token();
            vetor();
-           variavelMesmoTipo(escopo, tipo);
+           variavelMesmoTipo(tipo);
            
        }else {
     	   
@@ -735,10 +734,10 @@ private void complementoV(String escopo, String tipo) {
        
     }
 
-    private void variavelMesmoTipo(String escopo, String tipo) {
+    private void variavelMesmoTipo(String tipo) {
         if(this.token.getValor().equals(",")) {
             this.token = proximo_token();
-            complementoV(escopo, tipo);
+            complementoV(tipo);
             
          } else if(this.token.getValor().equals(";")) {
              this.token = proximo_token();
@@ -751,15 +750,15 @@ private void complementoV(String escopo, String tipo) {
          }
     }
     
-    private void maisVariaveis(String escopo) {
+    private void maisVariaveis() {
     	
         if(this.tipo.contains(this.token.getValor())){ //Primeiro("VarV") == Tipo
-            varV(escopo);
+            varV();
         }
     }
 
 
-    private void comandos(String escopo) {
+    private void comandos() {
         if(pertenceAoPrimeiroDe("leia")){
             leia();
             
@@ -767,14 +766,14 @@ private void complementoV(String escopo, String tipo) {
             escreva();
             
         }else if(pertenceAoPrimeiroDe("se")){
-            se(escopo);
+            se();
             
         }else if(pertenceAoPrimeiroDe("enquanto")){
-            enquanto(escopo);
+            enquanto();
             
         }else if(pertenceAoPrimeiroDe("atribuicaoVariavel") && !this.listaDeTokens.get(0).getValor().equals("(") && 
         		!this.listaDeTokens.get(0).getClasse().equals(Classe.OPERADOR_ARITMETICO)){
-            atribuicaoVariavel(escopo);
+            atribuicaoVariavel();
             
         }else if(pertenceAoPrimeiroDe("chamadaDeMetodo") && this.listaDeTokens.get(0).getValor().equals("(")){
             chamadaDeMetodo();
@@ -789,7 +788,7 @@ private void complementoV(String escopo, String tipo) {
             }
             
         }else if(pertenceAoPrimeiroDe("incrementador")){
-            incrementador(escopo);
+            incrementador();
             
         }else if(this.token.getValor().equals("resultado")){
             this.token = proximo_token();
@@ -872,7 +871,7 @@ private void complementoV(String escopo, String tipo) {
 		
 	}
 
-	private void se(String escopo) {
+	private void se() {
         
 		if(this.token.getValor().equals("se")) {
             this.token = proximo_token();
@@ -883,11 +882,11 @@ private void complementoV(String escopo, String tipo) {
                 
                 if(this.token.getValor().equals("{")) {
                     this.token = proximo_token();
-                    blocoSe(escopo);
+                    blocoSe();
                     
                     if(this.token.getValor().equals("}")) {
                         this.token = proximo_token();
-                        senao(escopo);
+                        senao();
                         
                     } else {
                     	System.out.println("ERRO: faltou o simbolo }");
@@ -1043,16 +1042,16 @@ private void complementoV(String escopo, String tipo) {
 	}
 	
     
-	private void blocoSe(String escopo) {
+	private void blocoSe() {
 		
 		if(pertenceAoPrimeiroDe("comandos")) {
-			comandos(escopo);
-			blocoSe(escopo);
+			comandos();
+			blocoSe();
 		}
 		
 	}
 
-	private void senao(String escopo) {
+	private void senao() {
 		
 		if(token.getValor().equals("senao")) {
             this.token = proximo_token();
@@ -1060,11 +1059,11 @@ private void complementoV(String escopo, String tipo) {
             
             if(token.getValor().equals("{")) {
                 this.token = proximo_token();
-                blocoSe(escopo);
+                blocoSe();
                 
                 if(token.getValor().equals("}")) {
                     this.token = proximo_token();
-                    senao(escopo);
+                    senao();
                     
                 } else {
                 	System.out.println("ERRO: faltou o simbolo }");
@@ -1103,7 +1102,7 @@ private void complementoV(String escopo, String tipo) {
 		
 	}
 
-	private void enquanto(String escopo) {
+	private void enquanto() {
 		if(token.getValor().equals("enquanto")) {
             this.token = proximo_token();
 
@@ -1116,7 +1115,7 @@ private void complementoV(String escopo, String tipo) {
                     
             		if(token.getValor().equals("{")) {
                         this.token = proximo_token();
-                        conteudoLaco(escopo);
+                        conteudoLaco();
                         
                         if(token.getValor().equals("}")) {
                             this.token = proximo_token();
@@ -1154,11 +1153,11 @@ private void complementoV(String escopo, String tipo) {
 	
 	
 
-    private void conteudoLaco(String escopo) {
+    private void conteudoLaco() {
     	
 		if(pertenceAoPrimeiroDe("comandos")) {
-			comandos(escopo);
-			conteudoLaco(escopo);
+			comandos();
+			conteudoLaco();
 		}
 		
 	}
@@ -1224,18 +1223,23 @@ private void complementoV(String escopo, String tipo) {
 		
 	}
 
-	private void atribuicaoVariavel(String escopo) {
+	private void atribuicaoVariavel() {
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
         	
         	//Erro semantico
         	if(this.isConstante(token.getValor())) {
-        		System.out.println("ERRO: atribuiï¿½ï¿½o de constante");
+        		System.out.println("ERRO: atribuicao de constante");
         		novoErroSemantico(this.token.getLinha(),"ERRO: atribuicaoo de constante");    
         		
-        	}else if(!this.hasVariarel(escopo, token.getValor())) {
+        	}else if(!this.hasVariarel( token.getValor())) {
         		System.out.println("ERRO: variavel nao declarada");
-        		novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada"); 
+        		novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");
+        		
         	}
+        		
+        	Escopo e = this.buscaEscopo(escopo);
+        	this.var = e.getVariavel(this.token.getValor());
+        	        	
         	
             this.token = proximo_token();
             vetor();
@@ -1265,16 +1269,19 @@ private void complementoV(String escopo, String tipo) {
         }
     }
 
-    private void incrementador(String escopo) {
+    private void incrementador() {
         
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
             Escopo e = this.buscaEscopo(escopo);
-            if(!e.isVariavel(this.token.getValor()) || !isConstante(this.token.getValor())) {
+            
+            if(!e.isVariavel(this.token.getValor()) && !isConstante(this.token.getValor())) {
             	System.out.println("ERRO: variavel nao declarada");
-            	novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");
-            		
-            }else{
-                System.out.println("wtf");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");		
+            }
+            
+            if(e.isVariavel(this.token.getValor()) && !e.getTipo(this.token.getValor()).equals("inteiro")) {
+            	System.out.println("ERRO: incrementadores so podem ser utilizados em variaveis do tipo inteiro");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: incrementadores so podem ser utilizados em variaveis do tipo inteiro");	
             }
             
             this.token = proximo_token();
@@ -1326,9 +1333,22 @@ private void complementoV(String escopo, String tipo) {
     		}
     		
     	} else if(token.getValor().equals("++") | token.getValor().equals("--")) {
+    		
+    		if(var != null && !var[2].equals("inteiro")) {
+    			System.out.println("ERRO: incrementador só pode ser usando em tipo inteiro");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: incrementador só pode ser usando em tipo inteiro" );
+    		}
+    		
             this.token = proximo_token();
             
             if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+            	Escopo e = this.buscaEscopo(escopo);
+            	            	
+            	if(var != null && !var[2].equals(e.getTipo(token.getValor()))) {
+        			System.out.println("ERRO: atribuicao com tipos incompatives");
+            		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipos incompatives" );
+        		}            	
+            	
                 this.token = proximo_token();
                 vetor();
                 
@@ -1340,9 +1360,21 @@ private void complementoV(String escopo, String tipo) {
             }
 
     	} else if(token.getValor().equals("verdadeiro") | token.getValor().equals("falso")) {
+    		
+    		if(this.var != null && !var[2].equals("boleano")) {
+    			System.out.println("ERRO: atribuicao com tipos incompatives");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipos incompatives" );
+    		}
+    		
             this.token = proximo_token();
 
     	} else if(token.getValor().equals("!") ) {
+    		
+    		if(this.var != null && !var[2].equals("boleano")) {
+    			System.out.println("ERRO: ! so pode ser usado em atribuicao de boleanos");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: ! so pode ser usado em atribuicao de boleanos" );
+    		}
+    		
             this.token = proximo_token();
     		auxiliarC();
     		
@@ -1403,6 +1435,16 @@ private void complementoV(String escopo, String tipo) {
 	private void auxiliarK() {
 		
 		if(token.getValor().equals("-")| token.getValor().equals("+")){
+			
+			if(this.var != null && var[2].equals("boleano")) {
+    			System.out.println("ERRO: nao se faz opercao com tipo boleano");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: nao se faz opercao com tipo boleano" );
+    		
+			} else if(this.var != null && var[2].equals("texto") && !token.getValor().equals("+")) {
+    			System.out.println("ERRO: Em tipo texto so e possivel fazer operacoes de adicao");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: Em tipo texto so e possivel fazer operacoes de adicao" );
+    		}
+			
             this.token = proximo_token();
             multExp();
             auxiliarK();
@@ -1426,6 +1468,16 @@ private void complementoV(String escopo, String tipo) {
 	private void auxiliarY() {
 		
 		if(token.getValor().equals('*')| token.getValor().equals('/')){
+			
+			if(this.var != null && var[2].equals("boleano")) {
+    			System.out.println("ERRO: nao se faz operacao com tipo boleano");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: nao se faz opercao com tipo boleano" );
+    		
+			} else if(this.var != null && var[2].equals("texto")) {
+    			System.out.println("ERRO: Em tipo texto so e possivel fazer operacoes de adicao");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: Em tipo texto so e possivel fazer operacoes de adicao" );
+    		}
+			
             this.token = proximo_token();
             operador();
             auxiliarY();
@@ -1450,9 +1502,33 @@ private void complementoV(String escopo, String tipo) {
     private void operador() {
     	
         if( this.token.getClasse().equals(Classe.NUMERO) | this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)){
-            this.token = proximo_token();    
+            
+        	if(this.var != null && ((this.token.getClasse().equals(Classe.NUMERO) &&
+        			!var[2].equals("inteiro") && !var[2].equals("real")) ||
+        			(!var[2].equals("texto") && this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)))) {
+        		
+    			System.out.println("ERRO: atribuicao com tipo incompativel");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipo incompativel" );
+    		
+			}
+        	
+        	this.token = proximo_token();    
             
         }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+        	
+        	Escopo e = this.buscaEscopo(escopo);
+        	String t = e.getTipo(token.getValor());
+        	
+        	if( t == null) {
+        		System.out.println("ERRO: variavel nao declarada");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada" );
+        	
+        	} else         	
+        	if(var != null &&  !t.equals(var[2])) {
+        		System.out.println("ERRO: atribuicao com tipo incompativel");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipo incompativel" );
+        	}
+        	
             this.token =proximo_token();
             vetor();
             auxiliarF();
@@ -1663,13 +1739,13 @@ private void complementoV(String escopo, String tipo) {
     	this.escopos.add(new Escopo(nome));
     }
     
-    private boolean hasVariarel(String escopo, String cadeia) {
+    private boolean hasVariarel( String cadeia) {
     	Escopo e = buscaEscopo(escopo);
 
     	return e.isVariavel(cadeia);
     }
     
-    private void addVariaveis(String escopo, String cadeia, String token, String tipo, String caso) {
+    private void addVariaveis(String cadeia, String token, String tipo, String caso) {
     	
         Escopo e = buscaEscopo(escopo);
     	
@@ -1679,7 +1755,7 @@ private void complementoV(String escopo, String tipo) {
     	
     }
     
-    private String getTipo(String escopo, String cadeia) {
+    private String getTipo( String cadeia) {
     	Escopo e = buscaEscopo(escopo);
     	
     	if(e != null) {
@@ -1713,13 +1789,13 @@ private void complementoV(String escopo, String tipo) {
 
     }
     
-    private void addParamentos(String escopo, String tipo, String cadeia) {
+    private void addParamentos( String tipo, String cadeia) {
     	Escopo e = this.buscaEscopo(escopo);
     	
     	e.addParametros(tipo, cadeia);
     }
     
-    private boolean hasParamentro(String escopo, String cadeia) {
+    private boolean hasParamentro( String cadeia) {
     	Escopo e = this.buscaEscopo(escopo);
     	
     	return e.hasParamentro(cadeia);

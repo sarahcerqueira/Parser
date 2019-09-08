@@ -61,6 +61,21 @@ public class Escopo {
 		
 	}
 	
+	public String[] getVariavel(String v) {
+		int tam, aux =0;
+		tam = variaveis.size();
+		
+		while(aux < tam) {
+			String [] a = variaveis.get(aux);
+			if(a[0].equals(v)) {
+				return a; }
+			
+			aux = aux +1;
+		}
+		
+		return null;
+	}
+	
 	public void addParametros(String tipo, String cadeia) {
 		String [] p = new String[2];
 		

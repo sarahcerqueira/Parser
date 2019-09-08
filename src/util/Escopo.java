@@ -6,7 +6,7 @@ public class Escopo {
 	private String nome;
 	private ArrayList<String[]> variaveis;
 	private ArrayList<String[]> paramentros;
-	private String[] retorno;
+	private String retorno;
 
 
 	public Escopo(String nome) {
@@ -100,4 +100,37 @@ public class Escopo {
 		
 		return false;
 	}
+
+	public ArrayList<String[]> getParametros() {
+		return this.paramentros;
+	}
+	
+	public String tipoParametro(String id) {
+		int tam, aux=0;
+		tam = this.paramentros.size();
+		String [] s;
+		
+		while(aux < tam) {
+			s = this.paramentros.get(aux);
+			
+			if(s[1].equals(id)) {
+				return s[0];
+			}
+			aux = aux +1;
+		}
+		
+		return null;
+	}
+	
+	public void setRetorno(String tipo) {
+		this.retorno = tipo;
+		
+		
+	}
+	
+	public String getRetorno() {
+		return this.retorno;
+	}
+	
+	
 }

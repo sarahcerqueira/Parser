@@ -8,6 +8,8 @@ package view;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+
+import util.ChamadaMetodo;
 import util.Classe;
 import util.Erro;
 import util.ManipuladorDeArquivo;
@@ -31,6 +33,8 @@ public class AnalisadorSintatico {
     private ArrayList<Escopo> escopos;
     private String[] var;
     private String escopo;
+	private ArrayList<ChamadaMetodo> callMedotos;
+
    
 
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens) {
@@ -41,6 +45,8 @@ public class AnalisadorSintatico {
         constantes = new ArrayList<String[]>();
         escopos = new ArrayList<Escopo>();
         errosSemanticos = new ArrayList<Erro>();
+		callMedotos = new ArrayList<ChamadaMetodo>();
+
     }
 
     public void setup() {
@@ -86,9 +92,81 @@ public class AnalisadorSintatico {
     		novoErroSemantico(-1,"ERRO: metodo principal nï¿½o existe");
         }
         
+		verificarChamadasMetodos();
+
         escreveSaida(arquivo);
 
     }
+    
+    private void verificarChamadasMetodos() {
+		ChamadaMetodo cm;
+		Escopo e, eaux;
+		ArrayList<String[]> parametros;
+		ArrayList<String> paraChamada;
+
+		while (!this.callMedotos.isEmpty()) {
+			cm = this.callMedotos.remove(0);
+			e = this.buscaEscopo(cm.getId());
+
+			if (e == null) {
+				System.out.println("ERRO: metodo " + cm.getId() + " não existe");
+				novoErroSemantico(cm.getLinha(), "ERRO: metodo " + cm.getId() + " não existe");
+
+			} else {
+
+				parametros = e.getParametros();
+				paraChamada = cm.getParametros();
+				int tam, aux = 0;
+				tam = parametros.size();
+
+				if (parametros.size() > paraChamada.size()) {
+					System.out.println("ERRO: falta parametros");
+					novoErroSemantico(cm.getLinha(), "ERRO: falta parametros");
+
+				} else if (parametros.size() < paraChamada.size()) {
+					System.out.println("ERRO: há parametros a mais");
+					novoErroSemantico(cm.getLinha(), "ERRO: há parametros a mais");
+				} else {
+
+					for (int i = 0; i < tam; i++) {
+						String tipo = parametros.get(i)[0];
+						String cadeia = paraChamada.get(i);
+						String escopo = cm.getEscopo();
+
+						eaux = this.buscaEscopo(escopo); // escopo de chamada
+
+						if (this.isConstante(cadeia)) {
+							if (!this.getConstante(cadeia)[3].equals(tipo)) {
+								System.out.println("ERRO: tipo de paramentro errado");
+								novoErroSemantico(cm.getLinha(), "ERRO: tipo de paramentro errado");
+								break;
+							}
+						}
+						if (eaux.hasParamentro(cadeia)) {
+							if (!eaux.tipoParametro(cadeia).equals(tipo)) {
+								System.out.println("ERRO: tipo de paramentro errado");
+								novoErroSemantico(cm.getLinha(), "ERRO: tipo de paramentro errado");
+								break;
+
+							}
+						}
+						if (eaux.isVariavel(cadeia)) {
+							if (!eaux.getTipo(cadeia).equals(tipo)) {
+								System.out.println("ERRO: tipo de paramentro errado");
+								novoErroSemantico(cm.getLinha(), "ERRO: tipo de paramentro errado");
+								break;
+
+							}
+						}
+
+					}
+
+			}
+			}	
+		}
+
+	}
+
 
     public Token proximo_token() {
         Token t = listaDeTokens.remove(0);
@@ -462,6 +540,9 @@ public class AnalisadorSintatico {
                             this.token = proximo_token();
                             
                             if (this.tipo.contains(this.token.getValor())) {
+                            	Escopo e = this.buscaEscopo(escopo);
+                            	e.setRetorno(this.token.getValor());
+                            	
                                 this.token = proximo_token();
 
                                 if (this.token.getValor().equals("{")) {
@@ -577,11 +658,13 @@ public class AnalisadorSintatico {
 
     private void chamadaDeMetodo() {
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-            this.token = proximo_token();
-            
+        	ChamadaMetodo cm = this.addChamadaMetodo(this.token.getValor(), escopo, token.getLinha());
+			this.token = proximo_token();
+
+        	            
             if(this.token.getValor().equals("(")){
                 this.token = proximo_token();
-                var();
+                var(cm);
                 
                 if(this.token.getValor().equals(")")){
                     this.token = proximo_token();
@@ -603,39 +686,41 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void var() {
+    private void var(ChamadaMetodo cm) {
     	
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+        	cm.addParametro(token.getValor());
             this.token = proximo_token();
             vetor();
-            maisVariavel();
+            maisVariavel(cm);
             
         }else if(pertenceAoPrimeiroDe("metodoParametro")){
-        	metodoParametro();
+        	metodoParametro(cm);
         	
         }
     }
     
-    private void maisVariavel() {
+    private void maisVariavel(ChamadaMetodo cm) {
         if(this.token.getValor().equals(",")){
             this.token = proximo_token();
-            var();
+            var(cm);
         }
     }
 
    
-    private void metodoParametro() {
+    private void metodoParametro(ChamadaMetodo cm) {
     	
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
+        	cm.addParametro(this.token.getValor());
             this.token = proximo_token();
             
             if(this.token.getValor().equals("(")){
                 this.token = proximo_token();
-                var();
+                var(cm);
                 
                 if(this.token.getValor().equals(")")){
                     this.token = proximo_token();
-                    maisVariavel();
+                    maisVariavel(cm);
                     
                 }else{
                 	System.out.println("ERRO: esta faltando o simbolo ) ");
@@ -1311,8 +1396,14 @@ private void complementoV(String tipo) {
     private void retorno() {
     	
         if(pertenceAoPrimeiroDe("verificaCaso")){
+        	Escopo e = this.buscaEscopo(escopo);
+        	this.var = new String[4];
+        	this.var[2] =e.getRetorno();
+        	
             verificaCaso();
         }
+        
+        
     }
     
     private void verificaCaso() {
@@ -1805,5 +1896,28 @@ private void complementoV(String tipo) {
     private boolean isNumeroInteiro(String numero){
         return numero.matches("[0-9]*");
     }
+    
+    private ChamadaMetodo addChamadaMetodo(String id, String escopo, int linha) {
+
+		ChamadaMetodo cm = new ChamadaMetodo(id, escopo, linha);
+		this.callMedotos.add(cm);
+
+		return cm;
+	}
+    
+    public String[] getConstante(String id) {
+		int tam, aux = 0;
+		tam = constantes.size();
+
+		while (aux < tam) {
+
+			if (constantes.get(aux)[0].equals(id)) {
+				return constantes.get(aux);
+			}
+			aux = aux + 1;
+		}
+
+		return null;
+	}
  
 }

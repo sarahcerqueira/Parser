@@ -1,4 +1,3 @@
-
 programa { 
 	
 constantes{
@@ -35,6 +34,8 @@ metodo principal():vazio{
 
 }
 
-	metodo a():vazio{}
+	metodo a():vazio{
+	
+	}
 
 }

@@ -661,7 +661,7 @@ public class AnalisadorSintatico {
         	ChamadaMetodo cm = this.addChamadaMetodo(this.token.getValor(), escopo, token.getLinha());
 			this.token = proximo_token();
 
-        	            
+        	  
             if(this.token.getValor().equals("(")){
                 this.token = proximo_token();
                 var(cm);
@@ -1316,7 +1316,7 @@ private void complementoV(String tipo) {
         		System.out.println("ERRO: atribuicao de constante");
         		novoErroSemantico(this.token.getLinha(),"ERRO: atribuicaoo de constante");    
         		
-        	}else if(!this.hasVariarel( token.getValor())) {
+        	}else if(!this.hasVariarel( token.getValor()) && !this.hasParamentro( token.getValor())) {
         		System.out.println("ERRO: variavel nao declarada");
         		novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");
         		
@@ -1357,14 +1357,15 @@ private void complementoV(String tipo) {
     private void incrementador() {
         
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
-            Escopo e = this.buscaEscopo(escopo);
+        	
+        	String t = getTipo(this.token.getValor());
             
-            if(!e.isVariavel(this.token.getValor()) && !isConstante(this.token.getValor())) {
+            if(t==null) {
             	System.out.println("ERRO: variavel nao declarada");
             	novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");		
-            }
-            
-            if(e.isVariavel(this.token.getValor()) && !e.getTipo(this.token.getValor()).equals("inteiro")) {
+          
+            }else             
+            if(!getTipo(this.token.getValor()).equals("inteiro")) {
             	System.out.println("ERRO: incrementadores so podem ser utilizados em variaveis do tipo inteiro");
             	novoErroSemantico(this.token.getLinha(),"ERRO: incrementadores so podem ser utilizados em variaveis do tipo inteiro");	
             }
@@ -1433,13 +1434,12 @@ private void complementoV(String tipo) {
             this.token = proximo_token();
             
             if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
-            	Escopo e = this.buscaEscopo(escopo);
             	            	
-            	if(var != null && !var[2].equals(e.getTipo(token.getValor()))) {
+            	if(var != null && !var[2].equals(getTipo(token.getValor()))) {
         			System.out.println("ERRO: atribuicao com tipos incompatives");
             		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipos incompatives" );
-        		}            	
-            	
+        		
+            	} 
                 this.token = proximo_token();
                 vetor();
                 
@@ -1558,7 +1558,7 @@ private void complementoV(String tipo) {
 
 	private void auxiliarY() {
 		
-		if(token.getValor().equals('*')| token.getValor().equals('/')){
+		if(token.getValor().equals("*")|| token.getValor().equals("/")){
 			
 			if(this.var != null && var[2].equals("boleano")) {
     			System.out.println("ERRO: nao se faz operacao com tipo boleano");
@@ -1598,8 +1598,8 @@ private void complementoV(String tipo) {
         			!var[2].equals("inteiro") && !var[2].equals("real")) ||
         			(!var[2].equals("texto") && this.token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)))) {
         		
-    			System.out.println("ERRO: atribuicao com tipo incompativel");
-        		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipo incompativel" );
+    			System.out.println("ERRO: operacao com tipo incompativel");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: operacao com tipo incompativel" );
     		
 			}
         	
@@ -1607,8 +1607,7 @@ private void complementoV(String tipo) {
             
         }else if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
         	
-        	Escopo e = this.buscaEscopo(escopo);
-        	String t = e.getTipo(token.getValor());
+        	String t = getTipo(token.getValor());
         	
         	if( t == null) {
         		System.out.println("ERRO: variavel nao declarada");
@@ -1616,8 +1615,8 @@ private void complementoV(String tipo) {
         	
         	} else         	
         	if(var != null &&  !t.equals(var[2])) {
-        		System.out.println("ERRO: atribuicao com tipo incompativel");
-        		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipo incompativel" );
+        		System.out.println("ERRO: operacao com tipo incompativel");
+        		this.novoErroSemantico(this.token.getLinha(),"ERRO: operacao com tipo incompativel" );
         	}
         	
             this.token =proximo_token();
@@ -1853,6 +1852,11 @@ private void complementoV(String tipo) {
     		return e.getTipo(cadeia);
     	}
     	
+    	if(this.isConstante(cadeia)) {
+    		String[] c = this.getConstante(cadeia);
+    		return c[3];
+    	}
+    	
     	return null;
     	
     }
@@ -1892,6 +1896,8 @@ private void complementoV(String tipo) {
     	return e.hasParamentro(cadeia);
     	
     }
+    
+    
     
     private boolean isNumeroInteiro(String numero){
         return numero.matches("[0-9]*");

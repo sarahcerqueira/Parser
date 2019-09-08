@@ -34,8 +34,20 @@ metodo principal():vazio{
 
 }
 
-	metodo a():vazio{
+	metodo a(real c):texto{
+
+		variaveis{
+			texto x;
+			inteiro b;
+		}
+
+		c = x;
+		x = x + b;
 	
+		resultado x * "eu";
+
 	}
+
+
 
 }

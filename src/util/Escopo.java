@@ -57,6 +57,17 @@ public class Escopo {
 			aux = aux +1;
 		}
 		
+		aux =0;
+		tam = this.paramentros.size();
+		
+		while(aux < tam) {
+			String [] a = paramentros.get(aux);
+			if(a[1].equals(v)) {
+				return a[0]; }
+			
+			aux = aux +1;
+		}
+		
 		return null;
 		
 	}
@@ -72,6 +83,22 @@ public class Escopo {
 			
 			aux = aux +1;
 		}
+		
+		aux =0;
+		tam = this.paramentros.size();
+		
+		while(aux < tam) {
+			String [] a = paramentros.get(aux);
+			if(a[1].equals(v)) {
+				String [] b = new String [4];
+				
+				b[0] = a[1];
+	            b[2] = a[0];
+				return b; }
+			
+			aux = aux +1;
+		}
+				
 		
 		return null;
 	}

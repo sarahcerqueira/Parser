@@ -1,11 +1,4 @@
 
 Lista de Erros Semanticos
-23 - ERRO: variavel nao declarada
-23 - ERRO: operacao com tipo incompativel
-27 - ERRO: variavel nao declarada
-27 - ERRO: variavel nao declarada
-31 - ERRO: incrementadores so podem ser utilizados em variaveis do tipo inteiro
-44 - ERRO: operacao com tipo incompativel
-45 - ERRO: operacao com tipo incompativel
-47 - ERRO: Em tipo texto so e possivel fazer operacoes de adicao
 22 - ERRO: metodo soma não existe
+26 - ERRO: tipo de paramentro errado

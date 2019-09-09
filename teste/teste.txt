@@ -9,18 +9,21 @@ metodo principal():vazio{
 
 	variaveis{
 
-		real vet[3], a;
-		inteiro b, d;
+		real vet[2], a, x;
+		inteiro b, d, tu;
 
 	}	
 
-	vet[2][3] = 10;
+	vet[1] = 10;
 	
 	d = ++b;
 
     b++;
 	soma();
-	a = x + b;
+
+	a = x + 2;
+
+	a(b);
 
 	se(!eu || a > 7) entao{
 	
@@ -28,7 +31,7 @@ metodo principal():vazio{
 
 		enquanto(a>b){
 			
-			a--;
+			d--;
 		}
 	}
 
@@ -37,14 +40,12 @@ metodo principal():vazio{
 	metodo a(real c):texto{
 
 		variaveis{
-			texto x;
-			inteiro b;
+			texto x, b
 		}
 
-		c = x;
 		x = x + b;
 	
-		resultado x * "eu";
+		resultado x + "eu";
 
 	}
 

@@ -166,6 +166,7 @@ public class AnalisadorSintatico {
 		}
 
 	}
+    
 
 
     public Token proximo_token() {
@@ -418,8 +419,9 @@ public class AnalisadorSintatico {
     private void conteudoLeia() {
 
         if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
+        	String v = token.getValor();
             this.token = proximo_token();
-            vetor();
+            vetor(v);
             lermais();
             
         } else {
@@ -473,15 +475,68 @@ public class AnalisadorSintatico {
         checar se o indice está entre 0 e o numero declarado?
         checar se o vetor não está sendo referenciado como matriz, ou o contrário
     */
-    private void vetor() {
+    private void vetor(String v) {
         if (this.token.getValor().equals("[")) {
+        	
+        	if(this.hasVariarel(v)&&!this.isVetor(v) && ! this.isMatriz(v)) {
+        		System.out.println("ERRO: variavel nao e vetor nem matriz");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao e vetor nem matriz");
+            
+        	}
+        	
             this.token = proximo_token();
             opI2();
             opIndice();
 
             if (this.token.getValor().equals("]")) {
                 this.token = proximo_token();
-                matriz();
+                matriz(v);
+            } else {
+            	System.out.println("ERRO: esta faltando ]");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando ]");
+            	this.recuperacaoDeErro();
+
+            }
+        } else {
+        	if(this.isVetor(v) && this.isMatriz(v)) {
+        		System.out.println("ERRO: variavel referenciada errado ");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: variavel referenciada errado ");
+            
+        	}
+        }
+    }
+
+    private void vetorDeclaracao(String v) {
+        if (this.token.getValor().equals("[")) {
+        	
+        	this.setCasoVariavel(v, "vetor");
+            this.token = proximo_token();
+            opI2();
+            opIndice();
+
+            if (this.token.getValor().equals("]")) {
+                this.token = proximo_token();
+                matrizDeclaracao(v);
+            } else {
+            	System.out.println("ERRO: esta faltando ]");
+                novoErro(this.token.getLinha(),"ERRO: esta faltando ]");
+            	this.recuperacaoDeErro();
+
+            }
+        }
+    }
+    
+    private void matrizDeclaracao(String v) {
+        if (this.token.getValor().equals("[")) {
+        	this.setCasoVariavel(v, "matriz");
+
+            this.token = proximo_token();
+            opI2();
+            opIndice();
+
+            if (this.token.getValor().equals("]")) {
+                this.token = proximo_token();
+
             } else {
             	System.out.println("ERRO: esta faltando ]");
                 novoErro(this.token.getLinha(),"ERRO: esta faltando ]");
@@ -491,9 +546,18 @@ public class AnalisadorSintatico {
         }
     }
 
-    private void matriz() {
+    
+    private void matriz(String v) {
+    	
         if (this.token.getValor().equals("[")) {
             this.token = proximo_token();
+            
+        	if(this.isVetor(v)) {
+        		System.out.println("ERRO: vetor referenciado como matriz");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: vetor referenciado como matriz");
+            
+        	}
+            
             opI2();
             opIndice();
 
@@ -506,8 +570,16 @@ public class AnalisadorSintatico {
             	this.recuperacaoDeErro();
 
             }
+        } else {
+        	if(this.isMatriz(v)) {
+        		System.out.println("ERRO: matriz referenciado como vetor");
+            	novoErroSemantico(this.token.getLinha(),"ERRO: matriz referenciado como vetor");
+            
+        	}
         }
     }
+    
+    
 
     private void metodo() {
     	
@@ -542,6 +614,11 @@ public class AnalisadorSintatico {
                             if (this.tipo.contains(this.token.getValor())) {
                             	Escopo e = this.buscaEscopo(escopo);
                             	e.setRetorno(this.token.getValor());
+                            	
+                            	if(escopo.equals("principal") && !this.token.getValor().equals("vazio") ) {
+                            		System.out.println("ERRO: o retorno do metodo principal so pode ser vazio");
+                            		novoErroSemantico(this.token.getLinha(),"ERRO: o retorno do metodo principal so pode ser vazio");
+                            	}
                             	
                                 this.token = proximo_token();
 
@@ -612,10 +689,17 @@ public class AnalisadorSintatico {
     }
 
     private void listaParametros() {
-    	String tipo, cadeia;
+    	String tipo;
     	
         if (this.tipo.contains(this.token.getValor())) {
         	tipo = token.getValor();
+        	
+        	if(escopo.equals("principal")) {
+        		System.out.println("ERRO: metodo principal nao pode ter parametros");
+        		novoErroSemantico(this.token.getLinha(),"ERRO: metodo principal nao pode ter parametros");
+        	
+        	}
+        	
             this.token = proximo_token();
 
             if (this.token.getClasse().equals(Classe.IDENTIFICADOR)) {
@@ -690,8 +774,9 @@ public class AnalisadorSintatico {
     	
         if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
         	cm.addParametro(token.getValor());
+        	String v = token.getValor();
             this.token = proximo_token();
-            vetor();
+            vetor(v);
             maisVariavel(cm);
             
         }else if(pertenceAoPrimeiroDe("metodoParametro")){
@@ -791,7 +876,6 @@ private void complementoV(String tipo) {
        if(this.token.getClasse().equals(Classe.IDENTIFICADOR)){
     	  
            String caso = "nenhum";
-           
     	   if(this.isConstante(token.getValor())) {
     		   System.out.println("ERRO: variavel com identificador igual ao identificador da constante");
     		   novoErroSemantico(this.token.getLinha(),"ERRO: variavel com identificador igual ao identificador da constante");
@@ -805,8 +889,9 @@ private void complementoV(String tipo) {
        			novoErroSemantico(this.token.getLinha(),"ERRO: variaveis com identificadores iguais");  
     	   }
     	   
+           String v = token.getValor();
            this.token = proximo_token();
-           vetor();
+           vetorDeclaracao(v);
            variavelMesmoTipo(tipo);
            
        }else {
@@ -1033,8 +1118,9 @@ private void complementoV(String tipo) {
 			negar();
 			
 			if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+				String v = token.getValor();
 	            this.token = proximo_token();
-	            vetor();
+	            vetor(v);
 	            
 			} else {
 				System.out.println("ERRO: faltou identificador");
@@ -1078,8 +1164,9 @@ private void complementoV(String tipo) {
 	private void tipoTermo() {
 		
 		if(token.getClasse().equals(Classe.IDENTIFICADOR)){
+			String v = token.getValor();
             this.token = proximo_token();
-            vetor();
+            vetor(v);
             
 		} else if(token.getClasse().equals(Classe.NUMERO)) {
             this.token = proximo_token();
@@ -1261,8 +1348,9 @@ private void complementoV(String tipo) {
 			negar();
 			
 			if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+				String v = token.getValor();
 	            this.token = proximo_token();
-	            vetor();
+	            vetor(v);
 	            
 			} else {
 				System.out.println("ERRO: faltou identificador");
@@ -1283,8 +1371,9 @@ private void complementoV(String tipo) {
 	private void complementoOperador() {
 		
 		if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+			String v = token.getValor();
             this.token = proximo_token();
-            vetor();
+            vetor(v);
             
 		} else if(token.getClasse().equals(Classe.NUMERO)) {
             this.token = proximo_token();
@@ -1320,14 +1409,19 @@ private void complementoV(String tipo) {
         		System.out.println("ERRO: variavel nao declarada");
         		novoErroSemantico(this.token.getLinha(),"ERRO: variavel nao declarada");
         		
+        	} else {
+        		
         	}
         		
         	Escopo e = this.buscaEscopo(escopo);
         	this.var = e.getVariavel(this.token.getValor());
         	        	
-        	
             this.token = proximo_token();
-            vetor();
+            
+            if(var != null)
+            	vetor(var[0]);
+            else 
+            	vetor(null);
             
             if(this.token.getValor().equals("=")){
                 this.token = proximo_token();
@@ -1370,8 +1464,9 @@ private void complementoV(String tipo) {
             	novoErroSemantico(this.token.getLinha(),"ERRO: incrementadores so podem ser utilizados em variaveis do tipo inteiro");	
             }
             
+            String v = token.getValor();
             this.token = proximo_token();
-            vetor();
+            vetor(v);
             
             if(isIncrementador(this.token.getValor())){ //pra checar se eh ++ ou --
                 this.token = proximo_token();
@@ -1440,8 +1535,9 @@ private void complementoV(String tipo) {
             		this.novoErroSemantico(this.token.getLinha(),"ERRO: atribuicao com tipos incompatives" );
         		
             	} 
+            	String v = token.getValor();
                 this.token = proximo_token();
-                vetor();
+                vetor(v);
                 
             } else {
             	
@@ -1496,8 +1592,9 @@ private void complementoV(String tipo) {
             this.token = proximo_token();
 
     	} else if(token.getClasse().equals(Classe.IDENTIFICADOR)) {
+    		String v = token.getValor();
             this.token = proximo_token();
-            vetor();
+            vetor(v);
             
         } else {
 
@@ -1619,8 +1716,9 @@ private void complementoV(String tipo) {
         		this.novoErroSemantico(this.token.getLinha(),"ERRO: operacao com tipo incompativel" );
         	}
         	
+        	String v = token.getValor();
             this.token =proximo_token();
-            vetor();
+            vetor(v);
             auxiliarF();
             
         }else if(pertenceAoPrimeiroDe("chamadaDeMetodo")){
@@ -1925,5 +2023,29 @@ private void complementoV(String tipo) {
 
 		return null;
 	}
+    
+    public void setCasoVariavel(String v, String caso) {
+    	Escopo e = this.buscaEscopo(escopo);
+    	
+    	e.setCasoVariavel(v, caso);
+
+    }
+    
+    public boolean isVetor(String v) {
+    	Escopo e = this.buscaEscopo(escopo);
+    	
+    	return e.isVetor(v);
+
+    }
+    
+    public boolean isMatriz(String v) {
+    	Escopo e = this.buscaEscopo(escopo);
+    	
+    	return e.isMatriz(v);
+
+    }
+ 
+
+
  
 }

@@ -159,5 +159,68 @@ public class Escopo {
 		return this.retorno;
 	}
 	
+	public void setCasoVariavel(String v, String caso) {
+		int tam, aux =0;
+		tam = variaveis.size();
+		
+		while(aux < tam) {
+			String [] a = variaveis.get(aux);
+			if(a[0].equals(v)) {
+					
+				a[3]= caso;
+			}
+			
+			aux = aux +1;
+		}
+		
+	}
+	
+	public boolean isVetor(String v) {
+		
+		int tam, aux =0;
+		tam = variaveis.size();
+		
+		while(aux < tam) {
+			String [] a = variaveis.get(aux);
+			if(a[0].equals(v)) {
+					
+				if(a[3].equals("vetor")) {
+					return true;
+					
+				} else {
+					return false;
+				}
+			}
+			
+			aux = aux +1;
+		}
+		
+		return false;
+	}
+	
+public boolean isMatriz(String v) {
+		
+		int tam, aux =0;
+		tam = variaveis.size();
+		
+		while(aux < tam) {
+			String [] a = variaveis.get(aux);
+			if(a[0].equals(v)) {
+					
+				if(a[3].equals("matriz")) {
+					return true;
+					
+				} else {
+					return false;
+				}
+			}
+			
+			aux = aux +1;
+		}
+		
+		return false;
+	}
+	
+	
 	
 }

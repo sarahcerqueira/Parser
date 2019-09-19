@@ -59,7 +59,7 @@ public class AnalisadorSintatico {
         tipo.add("boleano");
         tipo.add("texto");
 
-        this.elementos = new Token[2];
+        this.elementos = new Token[3];
     }
 
     private void novoErro(int linha, String erro) {
@@ -1089,6 +1089,7 @@ public class AnalisadorSintatico {
             termo();
 
             if (token.getClasse().equals(Classe.OPERADOR_RELACIONAL)) {
+                this.elementos[2] = this.token;
                 this.token = proximo_token();
                 termo();
 
@@ -1164,7 +1165,7 @@ public class AnalisadorSintatico {
                     && !this.hasParamentro(token.getValor())) {
                 System.out.println("ERRO: uso de variável inexistente em condicional");
                 novoErroSemantico(this.token.getLinha(), "ERRO: uso de variável inexistente em condicional");
-
+                this.verificaOrdem();
             }else{
                 this.verificaOrdem();
                 
@@ -2051,6 +2052,7 @@ public class AnalisadorSintatico {
         
         Token t1 = this.elementos[0];
         Token t2 = this.elementos[1];
+        Token t3 = this.elementos[2];
         String tipo1, tipo2;
         
         tipo1 = this.getTipo(t1.getValor());
@@ -2074,7 +2076,7 @@ public class AnalisadorSintatico {
                 }
             }else{
                 System.out.println("ERRO: o token t1 =" + (t1.toString()) + " nao possui tipo");
-                tipo1 = "ERRO1";
+                tipo1 = "inexistente1";
             }
         }
         
@@ -2093,12 +2095,26 @@ public class AnalisadorSintatico {
                 }
             }else{
                 System.out.println("ERRO: o token t2 =" + (t2.toString()) + " nao possui tipo");
-                tipo1 = "ERRO2";
+                tipo2 = "inexistente2";
             }
         }
         
+        
+        if(t3.getValor().equals("<") || t3.getValor().equals("<=") || t3.getValor().equals(">") 
+                || t3.getValor().equals(">=")){
+            
+            if(tipo1.equals("texto") || tipo1.equals("boleano") || tipo2.equals("texto") || tipo2.equals("boleano")){
+                System.out.println("ERRO: operacao relacional incompativel com os tipos da estutura condicional");
+                novoErroSemantico(this.token.getLinha(), "ERRO: operacao relacional incompativel com os tipos da estutura condicional");
+            }
+        } else if(t3.getValor().equals("=")){
+            System.out.println("ERRO: operacao relacional de atribuicao dentro de estutura condicional");
+            novoErroSemantico(this.token.getLinha(), "ERRO: operacao relacional de atribuicao dentro de estutura condicional");
+        }
+           
         this.elementos[0] = null;
         this.elementos[1] = null;
+        this.elementos[2] = null;
         
         return tipo1.equals(tipo2);
     }

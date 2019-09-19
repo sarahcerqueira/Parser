@@ -5,6 +5,7 @@ metodo principal():vazio{
 	variaveis{
 		real vet[2], a, x;
 		inteiro b, d, tu;
+		boleano y = "falso";
 	}	
 	vet[1] = 10;
 	d = ++b;
@@ -12,19 +13,19 @@ metodo principal():vazio{
 	soma();
 	a = x + 2;
 	a(b);
-	se(!eu || a > 7) entao{
+	se(a > 7 || 5 > x) entao{
 		tu = tu++;
 		enquanto(a>b){
 			d--;
 		}
-	}senao se(vc != b){
+	}senao se(vc != b || x == "oi") entao{
 		vet[0] = 30;
 	}
 
 }
 metodo a(real c):texto{
 variaveis{
-	texto x, b
+	texto x, b;
 }
 x = x + b;	
 resultado x + "eu";

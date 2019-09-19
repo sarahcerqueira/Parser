@@ -8,6 +8,7 @@ package view;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import util.ChamadaMetodo;
 import util.Classe;
@@ -34,7 +35,10 @@ public class AnalisadorSintatico {
     private String[] var;
     private String escopo;
     private ArrayList<ChamadaMetodo> callMedotos;
-
+    private String tipoVariavelAnterior;
+    private int ordem;
+    private Token[] elementos;
+    
     public AnalisadorSintatico(ArrayList<Token> listaDeTokens) {
         this.listaDeTokens = listaDeTokens;
         this.listaDeTokens.add(listaDeTokens.size(), new Token("$", Classe.FINALIZADOR, 0)); //add o '$' no final da lista
@@ -55,7 +59,7 @@ public class AnalisadorSintatico {
         tipo.add("boleano");
         tipo.add("texto");
 
-        //Identificadores
+        this.elementos = new Token[2];
     }
 
     private void novoErro(int linha, String erro) {
@@ -614,7 +618,6 @@ public class AnalisadorSintatico {
                                 if (this.token.getValor().equals("{")) {
                                     this.token = proximo_token();
                                     declaracaoVariaveis();
-                                    System.out.println(this.token);
                                     escopoMetodo();
 
                                     if (this.token.getValor().equals("}")) {
@@ -1151,28 +1154,32 @@ public class AnalisadorSintatico {
 
     }
 
+    
     private void tipoTermo() {
         
-        System.out.println(this.token);
         if (token.getClasse().equals(Classe.IDENTIFICADOR)) {
             
-            //checa se ja existe a variavel no escopo do metodo
+            //checa se ja existe a variavel no escopo do metodo, ou se é constante ou parametro.
             if (!this.isConstante(token.getValor()) && !this.hasVariarel(token.getValor())
                     && !this.hasParamentro(token.getValor())) {
                 System.out.println("ERRO: uso de variável inexistente em condicional");
                 novoErroSemantico(this.token.getLinha(), "ERRO: uso de variável inexistente em condicional");
 
+            }else{
+                this.verificaOrdem();
+                
             }
-            
             
             String v = token.getValor();
             this.token = proximo_token();
             vetor(v);
 
         } else if (token.getClasse().equals(Classe.NUMERO)) {
+            this.verificaOrdem();
             this.token = proximo_token();
 
         } else if (token.getClasse().equals(Classe.CADEIA_DE_CARACTERES)) {
+            this.verificaOrdem();
             this.token = proximo_token();
 
         } else if (token.getValor().equals("verdadeiro")) {
@@ -1187,6 +1194,7 @@ public class AnalisadorSintatico {
             this.recuperacaoDeErro();
         }
     }
+    
 
     private void condSe() {
 
@@ -1825,7 +1833,7 @@ public class AnalisadorSintatico {
         try {
 
             escrita = new ManipuladorDeArquivo(arquivo + ".saida", Modo.ESCRITA);
-
+            
             if (!this.erros.isEmpty() && !this.listaDeTokens.isEmpty()) {
 
                 for (int i = 0; i < this.erros.size(); i++) {
@@ -2017,6 +2025,82 @@ public class AnalisadorSintatico {
 
         return e.isMatriz(v);
 
+    }
+
+    
+    private void verificaOrdem(){
+        if(this.ordem == 0){
+            this.elementos[0] = this.token;
+            this.ordem++;
+        }else if(this.ordem == 1){
+             this.elementos[1] = this.token;
+             boolean compativeis = this.verificaCompatibilidade();
+                    
+             if(!compativeis){
+                System.out.println("ERRO: tipos incompativeis na estutura condicional");
+                novoErroSemantico(this.token.getLinha(), "ERRO: tipos incompativeis na estutura condicional");
+             }
+                    
+             this.ordem--;
+         }else{
+             System.out.println("ordem = "+ordem);
+         }
+    }
+    
+    private boolean verificaCompatibilidade() {
+        
+        Token t1 = this.elementos[0];
+        Token t2 = this.elementos[1];
+        String tipo1, tipo2;
+        
+        tipo1 = this.getTipo(t1.getValor());
+        tipo2 = this.getTipo(t2.getValor());
+        
+        //se t1 ou t2 forem IDENTIFICADORES, o tipo não será null.
+        //caso contrário, é necessário dar um tipo, pois t1 e t2 não são variaveis. Ex: t1 = 5, t2 = "oi"
+        
+        if(tipo1 == null){
+            if(t1.getClasse().equals(Classe.NUMERO)){
+                if(this.isNumeroInteiro(t1.getValor())){
+                    tipo1 = "inteiro";
+                }else{
+                    tipo1 = "real";
+                }
+            }else if(t1.getClasse().equals(Classe.CADEIA_DE_CARACTERES)){
+                if(t1.getValor().equals("verdadeiro") || t1.getValor().equals("falso")){
+                    tipo1 = "boleano";
+                }else{
+                    tipo1 = "texto";
+                }
+            }else{
+                System.out.println("ERRO: o token t1 =" + (t1.toString()) + " nao possui tipo");
+                tipo1 = "ERRO1";
+            }
+        }
+        
+        if(tipo2 == null){
+            if(t2.getClasse().equals(Classe.NUMERO)){
+                if(this.isNumeroInteiro(t2.getValor())){
+                    tipo2 = "inteiro";
+                }else{
+                    tipo2 = "real";
+                }
+            }else if(t2.getClasse().equals(Classe.CADEIA_DE_CARACTERES)){
+                if(t2.getValor().equals("verdadeiro") || t2.getValor().equals("falso")){
+                    tipo2 = "boleano";
+                }else{
+                    tipo2 = "texto";
+                }
+            }else{
+                System.out.println("ERRO: o token t2 =" + (t2.toString()) + " nao possui tipo");
+                tipo1 = "ERRO2";
+            }
+        }
+        
+        this.elementos[0] = null;
+        this.elementos[1] = null;
+        
+        return tipo1.equals(tipo2);
     }
 
 }

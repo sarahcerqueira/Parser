@@ -1,10 +1,8 @@
 
- Erros Sint�ticos 
-20 - ERRO: faltou a palavra 'entao
-21 - ERRO: faltou o simbolo {
-
 Lista de Erros Semanticos
-15 - ERRO: uso de variável inexistente em condicional
-20 - ERRO: uso de variável inexistente em condicional
-12 - ERRO: metodo soma n�o existe
-14 - ERRO: metodo a n�o existe
+16 - ERRO: tipos incompativeis na estutura condicional
+16 - ERRO: tipos incompativeis na estutura condicional
+21 - ERRO: uso de variável inexistente em condicional
+21 - ERRO: tipos incompativeis na estutura condicional
+13 - ERRO: metodo soma n�o existe
+15 - ERRO: tipo de paramentro errado

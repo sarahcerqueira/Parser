@@ -1,54 +1,32 @@
-programa { 
-	
-constantes{
-	
-}
-
+programa { 	
+	constantes{	
+	}
 metodo principal():vazio{
-
-
 	variaveis{
-
 		real vet[2], a, x;
 		inteiro b, d, tu;
-
 	}	
-
 	vet[1] = 10;
-	
 	d = ++b;
-
-    b++;
+	b++;
 	soma();
-
 	a = x + 2;
-
 	a(b);
-
 	se(!eu || a > 7) entao{
-	
 		tu = tu++;
-
 		enquanto(a>b){
-			
 			d--;
 		}
+	}senao se(vc != b){
+		vet[0] = 30;
 	}
 
 }
-
-	metodo a(real c):texto{
-
-		variaveis{
-			texto x, b
-		}
-
-		x = x + b;
-	
-		resultado x + "eu";
-
-	}
-
-
-
+metodo a(real c):texto{
+variaveis{
+	texto x, b
+}
+x = x + b;	
+resultado x + "eu";
+}
 }

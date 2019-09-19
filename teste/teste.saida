@@ -1,11 +1,12 @@
 
 Lista de Erros Semanticos
-17 - ERRO: tipos incompativeis na estutura condicional
-17 - ERRO: operacao relacional incompativel com os tipos da estutura condicional
-17 - ERRO: tipos incompativeis na estutura condicional
-17 - ERRO: operacao relacional de atribuicao dentro de estutura condicional
-22 - ERRO: uso de variável inexistente em condicional
+6 - ERRO: faltou retorno no metodo
+22 - ERRO: tipos incompativeis na estutura condicional
+22 - ERRO: operacao relacional incompativel com os tipos da estutura condicional
 22 - ERRO: tipos incompativeis na estutura condicional
 22 - ERRO: operacao relacional de atribuicao dentro de estutura condicional
-14 - ERRO: metodo soma n�o existe
-16 - ERRO: tipo de paramentro errado
+27 - ERRO: uso de variável inexistente em condicional
+27 - ERRO: tipos incompativeis na estutura condicional
+27 - ERRO: operacao relacional de atribuicao dentro de estutura condicional
+19 - ERRO: falta parametros
+21 - ERRO: tipo de paramentro errado

@@ -1,6 +1,11 @@
 programa { 	
 	constantes{	
 	}
+
+metodo soma(inteiro x):texto{
+}
+
+
 metodo principal():vazio{
 	variaveis{
 		real vet[2], a, x;
@@ -13,7 +18,7 @@ metodo principal():vazio{
 	b++;
 	soma();
 	a = x + 2;
-	a(b);
+	a(soma(b));
 	se(a > 7 || x > "oi" || x = 2.0) entao{
 		tu = tu++;
 		enquanto(a>b){
@@ -24,11 +29,16 @@ metodo principal():vazio{
 	}
 
 }
-metodo a(real c):texto{
+
+metodo a(real c):real{
 variaveis{
 	texto x, b;
+	real o;
 }
-x = x + b;	
-resultado x + "eu";
+x = x + b;
+	
+resultado o  ;
 }
+
+
 }
